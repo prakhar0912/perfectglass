@@ -1,11 +1,19 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-
-import { GUI } from "lil-gui";
-import { MeshTransmissionMaterial, MeshDiscardMaterial } from "@pmndrs/vanilla";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { GUI } from "lil-gui";
+import { MeshTransmissionMaterial, MeshDiscardMaterial } from "@pmndrs/vanilla";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
+import { SimplexNoise } from "three-stdlib";
+import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer"
+
+
+import Mountains from "../public/stars.jpg"
+import transparent from "../public/transparent.hdr"
+import glassBottle from "../public/glassBottle4.glb"
+
+
 
 const rgbeLoader = new RGBELoader();
 const gltfLoader = new GLTFLoader();
@@ -15,9 +23,9 @@ gltfLoader.setDRACOLoader(draco);
 
 const gui = new GUI();
 
-let meshTransmissionMaterialUpdate = () => {};
+let meshTransmissionMaterialUpdate = () => { };
 
-const params = {
+const paramsa = {
   transparentBG: true,
   bgColor: new THREE.Color(),
 };
@@ -29,31 +37,34 @@ renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// const camera = new THREE.PerspectiveCamera(
-//   45,
-//   window.innerWidth / window.innerHeight
-// );
+
 let camera = new THREE.OrthographicCamera(
-  window.innerWidth / -2, // left
-  window.innerWidth / 2, // right
-  window.innerHeight / 2, // top
-  window.innerHeight / -2, // bottom
+  window.innerWidth / -60, // left
+  window.innerWidth / 60, // right
+  window.innerHeight / 60, // top
+  window.innerHeight / -60, // bottom
   -1000, // near plane
   1000 // far plane
 );
-camera.position.set(-5, 5, 5);
+camera.position.set(0, 0, 10);
+camera
 
 const controls = new OrbitControls(camera, renderer.domElement);
 // controls.enableDamping = true;
 
 const scene = new THREE.Scene();
-const light = new THREE.DirectionalLight("#ffffff", 1);
+const light = new THREE.DirectionalLight("#ffffff", 100);
 light.castShadow = true;
 light.position.y = 15;
 
 scene.add(light);
 const helper = new THREE.DirectionalLightHelper(light);
 scene.add(helper);
+
+
+const amlight = new THREE.AmbientLight(0xFFFFFF, 20)
+amlight.position.set(0, 20, 0)
+scene.add(amlight)
 
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(10, 10).rotateX(-Math.PI / 2),
@@ -66,34 +77,18 @@ const clock = new THREE.Clock();
 const radius = 10;
 
 // request animation frame
-renderer.setAnimationLoop(() => {
-  const time = clock.getElapsedTime();
-  const x = radius * Math.sin(time);
-  const z = radius * Math.cos(time);
 
-  // Update the object's position
-  // light.position.set(x, 5, z);
-  helper.update();
-  meshTransmissionMaterialUpdate();
-  controls.update();
-  renderer.render(scene, camera);
-});
-
-gui.add(params, "transparentBG").onChange((v) => {
-  console.log(scene.background, scene.environment);
-  scene.background = v ? null : new THREE.Color(255, 255, 255);
-  scene.environment = new THREE.Color();
-});
-gui.addColor(params, "bgColor");
 
 async function setupEnv() {
-  const tex = await rgbeLoader.loadAsync("./assets/transparent.hdr");
+  const tex = await rgbeLoader.loadAsync(transparent);
   tex.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = tex;
   scene.environment = tex;
   // scene.background = new THREE.Color(255, 255, 255);
   // scene.environment = tex;
 }
+
+global.mixer = null
 
 async function setupMeshTransmissionMaterial() {
   const mtmParams = {
@@ -103,13 +98,12 @@ async function setupMeshTransmissionMaterial() {
     backsideThickness: 0.5,
   };
 
-  const gltf = await gltfLoader.loadAsync("./public/glassBottle4.glb");
+  const gltf = await gltfLoader.loadAsync(glassBottle);
   const model = gltf.scene;
-  const mixer = new THREE.AnimationMixer(model);
+  global.mixer = new THREE.AnimationMixer(model);
   const clips = gltf.animations;
-  console.log(clips);
   if (clips.length > 0) {
-    const action = mixer.clipAction(clips[0]);
+    const action = global.mixer.clipAction(clips[0]);
     action.play();
   }
 
@@ -174,17 +168,17 @@ async function setupMeshTransmissionMaterial() {
     camera,
   };
 
-  const clock = new THREE.Clock(true);
+  // const clock = new THREE.Clock(true);
+
+
 
   // run on every frame
-  meshTransmissionMaterialUpdate = () => {
-    mtm.time = clock.getElapsedTime();
-    const delta = clock.getDelta();
-    const elapsed = clock.getElapsedTime();
-    if (mixer) {
-      mixer.update(delta);
-      console.log(delta);
-    }
+  meshTransmissionMaterialUpdate = (elapsed, delta) => {
+    mtm.time = elapsed
+
+
+
+
     for (const mesh of meshes) {
       const parent = mesh;
 
@@ -252,7 +246,532 @@ function addTransmissionGui(gui, mat, mtmParams) {
   fol.add(mat, "attenuationDistance", 0, 2);
 }
 
-setupEnv();
-setupMeshTransmissionMaterial();
 
-console.log(scene.background, scene.environment);
+const loadTexture = async (url) => {
+  let textureLoader = new THREE.TextureLoader()
+  return new Promise(resolve => {
+    textureLoader.load(url, texture => {
+      resolve(texture)
+    })
+  })
+}
+
+const params = {
+  // general scene params
+  mouseSize: 0.5,
+  viscosity: 0.97,
+  waveHeight: 0.04
+}
+
+// Texture width for simulation
+const FBO_WIDTH = 512
+const FBO_HEIGHT = 256
+// Water size in system units
+const GEOM_WIDTH = window.innerWidth / 30
+const GEOM_HEIGHT = window.innerWidth / 60
+
+const simplex = new SimplexNoise()
+
+let app = {
+  async initScene() {
+
+    const color = new THREE.Color(1, 1, 1);
+    const width = 1;
+    const height = 1;
+
+    // Create an array of pixel data (R, G, B, A values from 0 to 255)
+    const data = new Uint8Array(width * height * 4);
+    data[0] = Math.floor(color.r * 255); // Red
+    data[1] = Math.floor(color.g * 255); // Green
+    data[2] = Math.floor(color.b * 255); // Blue
+    data[3] = 255; // Alpha (fully opaque)
+
+    // Create the DataTexture
+    const colorTexture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
+    colorTexture.needsUpdate = true;
+
+
+    // let Texture = colorTexture
+    let Texture = await loadTexture(Mountains)
+    // assigning image textures with SRGBColorSpace is essential in getting the rendered colors correct
+    Texture.colorSpace = THREE.SRGBColorSpace
+
+
+    this.container = renderer.domElement
+
+    this.mouseMoved = false
+    this.mouseCoords = new THREE.Vector2()
+    this.raycaster = new THREE.Raycaster()
+
+
+
+    this.container.style.touchAction = 'none'
+    this.container.addEventListener('pointermove', this.onPointerMove.bind(this))
+
+    const sun = new THREE.DirectionalLight(0xFFFFFF, 0.6)
+    sun.position.set(300, 400, 175)
+    scene.add(sun)
+
+    const sun2 = new THREE.DirectionalLight(0xFFFFFF, 0.6)
+    sun2.position.set(- 100, 350, - 200)
+    scene.add(sun2)
+
+    const materialColor = 0xFFFFFF
+
+    const geometry = new THREE.PlaneGeometry(GEOM_WIDTH, GEOM_HEIGHT, FBO_WIDTH, FBO_HEIGHT)
+
+    const waterVertex = `
+            uniform sampler2D heightmap;
+
+#define PHONG
+
+varying vec3 vViewPosition;
+
+#ifndef FLAT_SHADED
+
+    varying vec3 vNormal;
+
+#endif
+
+#include <common>
+#include <uv_pars_vertex>
+#include <displacementmap_pars_vertex>
+#include <envmap_pars_vertex>
+#include <color_pars_vertex>
+#include <morphtarget_pars_vertex>
+#include <skinning_pars_vertex>
+#include <shadowmap_pars_vertex>
+#include <logdepthbuf_pars_vertex>
+#include <clipping_planes_pars_vertex>
+varying float heightValue;
+
+void main() {
+
+    vec2 cellSize = vec2( 1.0 / (FBO_WIDTH), 1.0 / FBO_HEIGHT );
+
+    #include <uv_vertex>
+    #include <color_vertex>
+
+    // # include <beginnormal_vertex>
+    // Compute normal from heightmap
+    vec3 objectNormal = vec3(
+        ( texture2D( heightmap, uv + vec2( - cellSize.x, 0 ) ).x - texture2D( heightmap, uv + vec2( cellSize.x, 0 ) ).x ) * FBO_WIDTH / GEOM_WIDTH,
+        ( texture2D( heightmap, uv + vec2( 0, - cellSize.y ) ).x - texture2D( heightmap, uv + vec2( 0, cellSize.y ) ).x ) * FBO_HEIGHT / GEOM_HEIGHT,
+        1.0 );
+    //<beginnormal_vertex>
+
+    #include <morphnormal_vertex>
+    #include <skinbase_vertex>
+    #include <skinnormal_vertex>
+    #include <defaultnormal_vertex>
+
+#ifndef FLAT_SHADED // Normal computed with derivatives when FLAT_SHADED
+
+    vNormal = normalize( transformedNormal );
+
+#endif
+
+    //# include <begin_vertex>
+    heightValue = texture2D( heightmap, uv ).x;
+    vec3 transformed = vec3( position.x, position.y, heightValue );
+    //<begin_vertex>
+
+    #include <morphtarget_vertex>
+    #include <skinning_vertex>
+    #include <displacementmap_vertex>
+    #include <project_vertex>
+    #include <logdepthbuf_vertex>
+    #include <clipping_planes_vertex>
+
+    vViewPosition = - mvPosition.xyz;
+
+    #include <worldpos_vertex>
+    #include <envmap_vertex>
+    #include <shadowmap_vertex>
+
+}
+        `
+
+    const waterFragment = `
+        #define PHONG
+
+uniform vec3 diffuse;
+uniform vec3 emissive;
+uniform vec3 specular;
+uniform float shininess;
+uniform float opacity;
+
+#include <common>
+#include <packing>
+#include <dithering_pars_fragment>
+#include <color_pars_fragment>
+#include <uv_pars_fragment>
+#include <map_pars_fragment>
+#include <alphamap_pars_fragment>
+#include <alphatest_pars_fragment>
+#include <alphahash_pars_fragment>
+#include <aomap_pars_fragment>
+#include <lightmap_pars_fragment>
+#include <emissivemap_pars_fragment>
+#include <envmap_common_pars_fragment>
+#include <envmap_pars_fragment>
+#include <fog_pars_fragment>
+#include <bsdfs>
+#include <lights_pars_begin>
+#include <normal_pars_fragment>
+#include <lights_phong_pars_fragment>
+#include <shadowmap_pars_fragment>
+#include <bumpmap_pars_fragment>
+#include <normalmap_pars_fragment>
+#include <specularmap_pars_fragment>
+#include <logdepthbuf_pars_fragment>
+#include <clipping_planes_pars_fragment>
+
+void main() {
+
+	vec4 diffuseColor = vec4( diffuse, opacity );
+	#include <clipping_planes_fragment>
+
+	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+	vec3 totalEmissiveRadiance = emissive;
+
+	#include <logdepthbuf_fragment>
+	
+    // IMPORTANT: we're only changing the #include <map_fragment> part out of the whole phong fragment
+    #ifdef USE_MAP
+
+        vec3 vnormal = normalize( vNormal );
+        // adding normal.xy to the map uv is to add the rippling effect to the image as well
+        // if this isn't done, the image itself wouldn't be rippled upon,
+        // and you'd only see the waves' shades added upon the unmoved image
+        vec4 sampledDiffuseColor = texture2D( map, vMapUv + vnormal.xy );
+
+        #ifdef DECODE_VIDEO_TEXTURE
+
+            // use inline sRGB decode until browsers properly support SRGB8_APLHA8 with video textures
+
+            sampledDiffuseColor = vec4( mix( pow( sampledDiffuseColor.rgb * 0.9478672986 + vec3( 0.0521327014 ), vec3( 2.4 ) ), sampledDiffuseColor.rgb * 0.0773993808, vec3( lessThanEqual( sampledDiffuseColor.rgb, vec3( 0.04045 ) ) ) ), sampledDiffuseColor.w );
+        
+        #endif
+
+        diffuseColor *= sampledDiffuseColor;
+
+    #endif
+
+	#include <color_fragment>
+	#include <alphamap_fragment>
+	#include <alphatest_fragment>
+	#include <alphahash_fragment>
+	#include <specularmap_fragment>
+	#include <normal_fragment_begin>
+	#include <normal_fragment_maps>
+	#include <emissivemap_fragment>
+
+	// accumulation
+	#include <lights_phong_fragment>
+	#include <lights_fragment_begin>
+	#include <lights_fragment_maps>
+	#include <lights_fragment_end>
+
+	// modulation
+	#include <aomap_fragment>
+
+	vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+
+	#include <envmap_fragment>
+	#include <opaque_fragment>
+	#include <tonemapping_fragment>
+	#include <colorspace_fragment>
+	#include <fog_fragment>
+	#include <premultiplied_alpha_fragment>
+	#include <dithering_fragment>
+
+}
+        `
+
+    // material: make a THREE.ShaderMaterial clone of THREE.MeshPhongMaterial, with customized vertex shader
+    const material = new THREE.ShaderMaterial({
+      uniforms: THREE.UniformsUtils.merge([
+        THREE.ShaderLib['phong'].uniforms,
+        {
+          'heightmap': { value: null },
+        }
+      ]),
+      vertexShader: waterVertex,
+      fragmentShader: waterFragment
+    });
+
+    material.lights = true
+
+    // Material attributes from THREE.MeshPhongMaterial
+    // for the color map to work, we need all 3 lines (define material.color, material.map and material.uniforms[ 'map' ].value)
+    material.color = new THREE.Color(materialColor)
+    material.specular = new THREE.Color(0x111111)
+    material.shininess = 50
+    material.map = Texture
+
+    // Sets the uniforms with the material values
+    material.uniforms['diffuse'].value = material.color
+    material.uniforms['specular'].value = material.specular
+    material.uniforms['shininess'].value = Math.max(material.shininess, 1e-4)
+    material.uniforms['opacity'].value = material.opacity
+    material.uniforms['map'].value = Texture
+
+    // Defines
+    material.defines.FBO_WIDTH = FBO_WIDTH.toFixed(1)
+    material.defines.FBO_HEIGHT = FBO_HEIGHT.toFixed(1)
+    material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
+    material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
+
+    this.waterUniforms = material.uniforms
+
+    this.waterMesh = new THREE.Mesh(geometry, material)
+    this.waterMesh.matrixAutoUpdate = false
+    this.waterMesh.position.set(0, 0, -5)
+    this.waterMesh.updateMatrix()
+
+    scene.add(this.waterMesh)
+
+    // Creates the gpu computation class and sets it up
+    this.gpuCompute = new GPUComputationRenderer(FBO_WIDTH, FBO_HEIGHT, renderer)
+
+    if (renderer.capabilities.isWebGL2 === false) {
+      this.gpuCompute.setDataType(THREE.HalfFloatType)
+    }
+
+    const heightmap0 = this.gpuCompute.createTexture()
+
+    this.fillTexture(heightmap0)
+
+    const heightMapShader = `
+            #define PI 3.1415926538
+
+uniform vec2 mousePos;
+uniform float mouseSize;
+uniform float viscosityConstant;
+uniform float waveheightMultiplier;
+
+void main()	{
+    // The size of the computation (sizeX * sizeY) is defined as 'resolution' automatically in the shader.
+    // sizeX and sizeY are passed as params when you make a new GPUComputationRenderer instance.
+    vec2 cellSize = 1.0 / resolution.xy;
+
+    // gl_FragCoord is in pixels (coordinates range from 0.0 to the width/height of the window,
+    // note that the window isn't the visible one on your browser here, since the gpgpu renders to its virtual screen
+    // thus the uv still is 0..1
+    vec2 uv = gl_FragCoord.xy * cellSize;
+
+    // heightmapValue.x == height from previous frame
+    // heightmapValue.y == height from penultimate frame
+    // heightmapValue.z, heightmapValue.w not used
+    vec4 heightmapValue = texture2D( heightmap, uv );
+
+    // Get neighbours
+    vec4 north = texture2D( heightmap, uv + vec2( 0.0, cellSize.y ) );
+    vec4 south = texture2D( heightmap, uv + vec2( 0.0, - cellSize.y ) );
+    vec4 east = texture2D( heightmap, uv + vec2( cellSize.x, 0.0 ) );
+    vec4 west = texture2D( heightmap, uv + vec2( - cellSize.x, 0.0 ) );
+
+    // https://web.archive.org/web/20080618181901/http://freespace.virgin.net/hugo.elias/graphics/x_water.htm
+    // change in height is proportional to the height of the wave 2 frames older
+    // so new height is equaled to the smoothed height plus the change in height
+    float newHeight = ( ( north.x + south.x + east.x + west.x ) * 0.5 - heightmapValue.y ) * viscosityConstant;
+
+    // Mouse influence
+    float mousePhase = clamp( length( ( uv - vec2( 0.5 ) ) * vec2(GEOM_WIDTH, GEOM_HEIGHT) - vec2( mousePos.x, - mousePos.y ) ) * PI / mouseSize, 0.0, PI );
+    newHeight += ( cos( mousePhase ) + 1.0 ) * waveheightMultiplier;
+
+    heightmapValue.y = heightmapValue.x;
+    heightmapValue.x = newHeight;
+
+    gl_FragColor = heightmapValue;
+
+}
+        `
+
+    this.heightmapVariable = this.gpuCompute.addVariable('heightmap', heightMapShader, heightmap0)
+
+    console.log(this.heightmapVariable)
+    this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable])
+
+    this.heightmapVariable.material.uniforms['mousePos'] = { value: new THREE.Vector2(10000, 10000) }
+    this.heightmapVariable.material.uniforms['mouseSize'] = { value: params.mouseSize }
+    this.heightmapVariable.material.uniforms['viscosityConstant'] = { value: params.viscosity }
+    this.heightmapVariable.material.uniforms['waveheightMultiplier'] = { value: params.waveHeight }
+    this.heightmapVariable.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
+    this.heightmapVariable.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
+
+    const error = this.gpuCompute.init()
+    if (error !== null) {
+      console.error(error)
+    }
+
+    // Create compute shader to smooth the water surface and velocity
+    const smoothSh = `
+            uniform sampler2D smoothTexture;
+
+void main()	{
+
+    vec2 cellSize = 1.0 / resolution.xy;
+
+    vec2 uv = gl_FragCoord.xy * cellSize;
+
+    // Computes the mean of texel and 4 neighbours
+    vec4 textureValue = texture2D( smoothTexture, uv );
+    textureValue += texture2D( smoothTexture, uv + vec2( 0.0, cellSize.y ) );
+    textureValue += texture2D( smoothTexture, uv + vec2( 0.0, - cellSize.y ) );
+    textureValue += texture2D( smoothTexture, uv + vec2( cellSize.x, 0.0 ) );
+    textureValue += texture2D( smoothTexture, uv + vec2( - cellSize.x, 0.0 ) );
+
+    textureValue /= 5.0;
+
+    gl_FragColor = textureValue;
+
+}
+        `
+
+    this.smoothShader = this.gpuCompute.createShaderMaterial(smoothSh, { smoothTexture: { value: null } })
+    console.log('hehe')
+
+  },
+  fillTexture(texture) {
+    const waterMaxHeight = 0.008;
+
+    function noise(x, y) {
+      let multR = waterMaxHeight;
+      let mult = 0.025;
+      let r = 0;
+      for (let i = 0; i < 15; i++) {
+        r += multR * simplex.noise(x * mult, y * mult);
+        multR *= 0.53 + 0.025 * i;
+        mult *= 1.25;
+      }
+
+      return r;
+    }
+
+    const pixels = texture.image.data;
+
+    let p = 0;
+    for (let j = 0; j < FBO_HEIGHT; j++) {
+      for (let i = 0; i < FBO_WIDTH; i++) {
+        const x = i * 128 / FBO_WIDTH;
+        const y = j * 128 / FBO_HEIGHT;
+
+        pixels[p + 0] = noise(x, y);
+        pixels[p + 1] = 0;
+        pixels[p + 2] = 0;
+        pixels[p + 3] = 1;
+
+        p += 4;
+      }
+    }
+  },
+  smoothWater() {
+    const currentRenderTarget = this.gpuCompute.getCurrentRenderTarget(this.heightmapVariable)
+    const alternateRenderTarget = this.gpuCompute.getAlternateRenderTarget(this.heightmapVariable)
+
+    for (let i = 0; i < 10; i++) {
+      this.smoothShader.uniforms['smoothTexture'].value = currentRenderTarget.texture
+      this.gpuCompute.doRenderTarget(this.smoothShader, alternateRenderTarget)
+
+      this.smoothShader.uniforms['smoothTexture'].value = alternateRenderTarget.texture
+      this.gpuCompute.doRenderTarget(this.smoothShader, currentRenderTarget)
+    }
+  },
+  setMouseCoords(x, y) {
+    this.mouseCoords.set((x / renderer.domElement.clientWidth) * 2 - 1, (y / renderer.domElement.clientHeight) * 2 - 1)
+    this.mouseMoved = true
+  },
+  onPointerMove(event) {
+    if (event.isPrimary === false) return
+    this.setMouseCoords(event.clientX, event.clientY)
+  },
+  // @param {number} interval - time elapsed between 2 frames
+  // @param {number} elapsed - total time elapsed since app start
+  updateScene(interval, elapsed) {
+
+    // Set uniforms: mouse interaction
+    const hmUniforms = this.heightmapVariable.material.uniforms
+    if (this.mouseMoved) {
+
+      this.raycaster.setFromCamera(this.mouseCoords, camera)
+
+      const intersects = this.raycaster.intersectObject(this.waterMesh)
+
+      if (intersects.length > 0) {
+        const point = intersects[0].point
+        hmUniforms['mousePos'].value.set(point.x, point.y)
+      } else {
+        hmUniforms['mousePos'].value.set(10000, 10000)
+      }
+
+      this.mouseMoved = false
+    } else {
+      hmUniforms['mousePos'].value.set(10000, 10000)
+    }
+
+    // Do the gpu computation
+    this.gpuCompute.compute()
+
+    // Get compute output in custom uniform
+    this.waterUniforms['heightmap'].value = this.gpuCompute.getCurrentRenderTarget(this.heightmapVariable).texture
+  }
+}
+
+
+let main = async () => {
+  await setupEnv();
+  await setupMeshTransmissionMaterial();
+  await app.initScene()
+
+  // renderer.setAnimationLoop(() => {
+  //   const time = clock.getElapsedTime();
+  //   const delta = clock.getDelta()
+  //   console.log(delta)
+  //   if (global.mixer != null) {
+  //     global.mixer.update()
+  //     // console.log(delta)
+  //   }
+  //   helper.update();
+  //   meshTransmissionMaterialUpdate(time, delta);
+  //   app.updateScene(delta, time)
+  //   controls.update();
+  //   renderer.render(scene, camera);
+  // });
+
+  gui.add(paramsa, "transparentBG").onChange((v) => {
+    console.log(scene.background, scene.environment);
+    scene.background = v ? null : new THREE.Color(255, 255, 255);
+    scene.environment = new THREE.Color();
+  });
+  gui.addColor(paramsa, "bgColor");
+
+  // console.log(scene.background, scene.environment);
+  render()
+
+}
+
+function render() {
+  requestAnimationFrame(render)
+
+  
+  const delta = clock.getDelta()
+
+  if (global.mixer != null) {
+    global.mixer.update(delta)
+    // console.log(delta)
+  }
+  // const elapsedclock.elapsedTime
+  helper.update();
+  meshTransmissionMaterialUpdate(clock.elapsedTime);
+  app.updateScene()
+  controls.update();
+
+  renderer.render(scene, camera);
+}
+
+main()
+
+
+
