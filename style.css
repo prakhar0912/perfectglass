@@ -1,0 +1,249 @@
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+    overflow: clip;
+}
+
+.lenis [data-lenis-prevent],
+.lenis [data-lenis-prevent-wheel],
+.lenis [data-lenis-prevent-touch] {
+    overscroll-behavior: contain;
+}
+
+.lenis.lenis-smooth iframe {
+    pointer-events: none;
+}
+
+.lenis.lenis-autoToggle {
+    transition-property: overflow;
+    transition-duration: 1ms;
+    transition-behavior: allow-discrete;
+}
+
+:root {
+    --muted-cyan: #00B2C8;
+    /* Global variable */
+    --text-color: black;
+    --grey: #848484;
+    --purple: #a958b8;
+    --color-gradient-counter: linear-gradient(57.83deg, rgba(187, 229, 235, .4) 23.83%, rgba(73, 229, 212, .6) 50.88%, #2a6ff1 86.22%) border-box;
+}
+
+@font-face {
+    font-family: 'DMSans';
+    font-style: normal;
+    font-weight: normal;
+    src: url(./assets/DMSans.ttf) format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Playfair';
+    font-style: normal;
+    font-weight: normal;
+    src: url(./assets/PlayfairDisplayItalic.ttf) format('truetype');
+    font-display: swap;
+}
+
+body {
+    margin: 0;
+
+    background-image: linear-gradient(45deg, #808080 25%, transparent 25%),
+        linear-gradient(-45deg, #808080 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #808080 75%),
+        linear-gradient(-45deg, transparent 75%, #808080 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    font-family: 'DMSans', sans-serif;
+}
+
+canvas {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: 0;
+    pointer-events: all;
+}
+
+.outerContainer {
+    display: flex;
+    z-index: 0;
+    gap: 20vh;
+    flex-direction: column;
+    margin: 0;
+}
+
+.outerContainer>section {
+    display: block;
+    position: relative;
+    margin: 0;
+    min-height: 100vh;
+    text-align: center;
+}
+
+.logo {
+    width: 350px;
+}
+
+h1 {
+    font-family: 'DMSans';
+    font-size: 72px;
+    letter-spacing: 1px;
+    word-spacing: 2px;
+}
+
+h1>i {
+    color: var(--muted-cyan);
+}
+
+.cyan-color {
+    color: var(--muted-cyan);
+}
+
+.purple-color {
+    color: var(--purple);
+}
+
+.section1>img {
+    margin-top: 20px;
+}
+
+.section1>h1 {
+    margin-top: 25px;
+    color: var(--grey);
+}
+
+.section2 {
+    padding-left: 25vw;
+}
+
+.stats-container {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    justify-items: center;
+    align-items: center;
+    font-size: 24px;
+    margin-top: 100px;
+}
+
+
+
+.stats-container>div>img {
+    /* width: 60px; */
+    height: 60px;
+    width: auto;
+}
+
+.stats-container>div {
+    margin: 40px 0;
+}
+
+.stats-container>div>p {
+    margin: 12px;
+}
+
+.stats-container>div>p:first-of-type {
+    font-size: 48px;
+    letter-spacing: 2px;
+    font-weight: 800;
+    margin-top: 24px;
+}
+
+.stats-container>div>p:last-of-type {
+    color: var(--grey);
+}
+
+
+.section3 {
+    padding-left: 100px;
+    padding-right: 25vw;
+}
+
+.heading-container {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto auto;
+    width: fit-content;
+    align-items: start;
+    margin: auto;
+    margin-bottom: 100px;
+}
+
+.heading-container>h1 {
+    margin: 0;
+}
+
+.heading-container>img {
+    height: 40px;
+    margin-left: 15px;
+    /* margin-top: 50px; */
+}
+
+.about-container {
+    width: 70%;
+    margin: auto;
+    font-size: 24px;
+}
+
+.section4 {
+    /* min-height: 200vh !important; */
+    position: relative;
+    
+}
+
+.cards-container{
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto auto;
+    min-height: 200vh;
+    justify-items: left;
+    align-items: center;
+    margin: 0 10vw;
+}
+
+.cards-container>div {
+    background-color: #ffffff29;
+    position: relative;
+    border-radius: 50px;
+    width: 30vw;
+    padding: 60px 40px;
+}
+
+.cards-container>div::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: 50px;
+    border: 2px solid transparent;
+    background: var(--color-gradient-counter);
+    -webkit-mask: -webkit-gradient(linear, left top, left bottom, color-stop(0, #fff)) padding-box, -webkit-gradient(linear, left top, left bottom, color-stop(0, #fff));
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: source-out;
+    mask-composite: exclude;
+}
+
+.cards-container > div:nth-child(2){
+    justify-self: right;
+}
+
+.card-container > img{
+    width: 100px;
+}
+
+.card-container > h3{
+    font-size: 36px;
+}
+
+.card-container > p{
+    font-size: 24px;
+    color: var(--grey);
+}

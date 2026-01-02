@@ -1,31 +1,105 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <style>
-      body {
-        margin: 0;
 
-        background-image: linear-gradient(45deg, #808080 25%, transparent 25%),
-          linear-gradient(-45deg, #808080 25%, transparent 25%),
-          linear-gradient(45deg, transparent 75%, #808080 75%),
-          linear-gradient(-45deg, transparent 75%, #808080 75%);
-        background-size: 20px 20px;
-        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-        background-color: aqua;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="style.css">
 
-      canvas {
-        cursor: grab;
-        display: block;
-      }
+</head>
 
-      canvas:active {
-        cursor: grabbing;
-      }
-    </style>
-  </head>
-  <body>
-    <script src="src/index.js"></script>
-  </body>
+<body>
+  <canvas></canvas>
+  <div class="outerContainer">
+    <section class="section1">
+      <img class="logo" src="./assets/logo.png" alt="logo Image">
+      <h1>Your Sustainable <i>Hydration</i> Partner</h1>
+    </section>
+    <section class="section2">
+      <h1>Making every <br><i>bottle</i> count.</h1>
+      <div class="stats-container">
+        <div>
+          <img src="./assets/plastics.png" alt="">
+          <p class="cyan-color">240,000</p>
+          <p>Micro-plastic particles reduced</p>
+        </div>
+        <div>
+          <img src="./assets/carbon.png" alt="">
+          <p class="purple-color">-93%</p>
+          <p>Carbon footprint reduction</p>
+        </div>
+        <div>
+          <img src="./assets/recycle.png" alt="">
+          <p class="purple-color">+73%</p>
+          <p>Recycling rate</p>
+        </div>
+        <div>
+          <img src="./assets/power.png" alt="">
+          <p class="cyan-color">-93%</p>
+          <p>Less Energy consumed</p>
+        </div>
+      </div>
+    </section>
+    <section class="section3">
+      <div class="heading-container">
+        <h1>Why</h1>
+        <img src="./assets/logo.png" alt="">
+      </div>
+      <div class="about-container">
+        <p>
+          We are here to do our part for our planet Earth (with a little help from you, of course): to substitute
+          single-use plastic water bottles in the F&B industry with eco-friendly and sustainable glass bottles.
+        </p>
+        <p>
+          Did you know that glass bottles are considered the most environmentally friendly when it comes to storing
+          everyday beverages such as water?
+          <b class="cyan-color">‘Surayee’</b> means an earthen pot; and through us, you get the best of both worlds –
+          our
+          products contain all the
+          goodness of alkaline water packaged in a way that is good for the Earth.
+        </p>
+        <p>
+          What’s better? We are <b class="cyan-color">affordable</b> because we truly believe that <b
+            class="cyan-color">sustaining our climate and natural resources
+            shouldn’t come at a large premium.</b>
+        </p>
+      </div>
+    </section>
+    <section class="section4">
+      <div class="cards-container">
+        <div>
+          <div class="card-container">
+            <img src="./assets/sustainability.png" alt="">
+            <h3 class="cyan-color">SUSTAINABILITY LEADERS</h3>
+            <p>Our clients are passionate about sustainability and recognize the importance of reducing plastic waste.
+              They understand that by choosing Surayee, they are making a positive impact on the environment. Our glass
+              bottles are not only aesthetically pleasing but also completely recyclable, ensuring that our clients are
+              part of the solution to the plastic pollution crisis.</p>
+          </div>
+        </div>
+        <div>
+          <div class="card-container">
+            <img src="./assets/wellness.png" alt="">
+            <h3 class="purple-color">HEALTH & WELLNESS ADVOCATES</h3>
+            <p>Our clients are passionate about sustainability and recognize the importance of reducing plastic waste.
+              They understand that by choosing Surayee, they are making a positive impact on the environment. Our glass
+              bottles are not only aesthetically pleasing but also completely recyclable, ensuring that our clients are
+              part of the solution to the plastic pollution crisis.</p>
+          </div>
+        </div>
+        <div>
+          <div class="card-container">
+            <img src="./assets/eco.png" alt="">
+            <h3 class="cyan-color">ECO-CONSCIOUS BUSINESS</h3>
+            <p>Our clients are passionate about sustainability and recognize the importance of reducing plastic waste.
+              They understand that by choosing Surayee, they are making a positive impact on the environment. Our glass
+              bottles are not only aesthetically pleasing but also completely recyclable, ensuring that our clients are
+              part of the solution to the plastic pollution crisis.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script src="src/index.js"></script>
+</body>
+
 </html>

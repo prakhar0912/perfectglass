@@ -1,3 +1,12 @@
+import Lenis from "lenis";
+import { gsap } from "gsap";
+import Stats from "three/examples/jsm/libs/stats.module.js";
+
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+// ScrollSmoother requires ScrollTrigger
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother, ScrollToPlugin);
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -9,9 +18,32 @@ import { SimplexNoise } from "three-stdlib";
 import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer"
 
 
-import Mountains from "../public/stars.jpg"
+import Mountains from "../assets/whitehex.jpg"
 import transparent from "../public/transparent.hdr"
-import glassBottle from "../public/glassBottle4.glb"
+import glassBottle from "../public/finalbottle1.glb"
+
+
+
+const stats = new Stats();
+// 0: fps (frames per second), 1: ms (milliseconds per frame), 2: mb (memory)
+stats.showPanel(0);
+document.body.appendChild(stats.dom)
+
+
+const lenis = new Lenis();
+
+// Synchronize Lenis scrolling with GSAP's ScrollTrigger plugin
+lenis.on('scroll', ScrollTrigger.update);
+
+// Add Lenis's requestAnimationFrame (raf) method to GSAP's ticker
+// This ensures Lenis's smooth scroll animation updates on each GSAP tick
+gsap.ticker.add((time) => {
+  lenis.raf(time * 1000); // Convert time from seconds to milliseconds
+});
+
+// Disable lag smoothing in GSAP to prevent any delay in scroll animations
+gsap.ticker.lagSmoothing(0);
+
 
 
 
@@ -21,21 +53,16 @@ const draco = new DRACOLoader();
 draco.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
 gltfLoader.setDRACOLoader(draco);
 
-const gui = new GUI();
+// const gui = new GUI();
 
 let meshTransmissionMaterialUpdate = () => { };
 
-const paramsa = {
-  transparentBG: true,
-  bgColor: new THREE.Color(),
-};
-
-const renderer = new THREE.WebGLRenderer({ alpha: true });
+let canvas = document.querySelector("canvas")
+const renderer = new THREE.WebGLRenderer({ alpha: true, canvas });
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
 
 
 let camera = new THREE.OrthographicCamera(
@@ -47,34 +74,25 @@ let camera = new THREE.OrthographicCamera(
   1000 // far plane
 );
 camera.position.set(0, 0, 10);
-camera
-
-const controls = new OrbitControls(camera, renderer.domElement);
-// controls.enableDamping = true;
 
 const scene = new THREE.Scene();
-const light = new THREE.DirectionalLight("#ffffff", 100);
-light.castShadow = true;
-light.position.y = 15;
-
-scene.add(light);
-const helper = new THREE.DirectionalLightHelper(light);
-scene.add(helper);
-
-
-const amlight = new THREE.AmbientLight(0xFFFFFF, 20)
-amlight.position.set(0, 20, 0)
-scene.add(amlight)
-
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(10, 10).rotateX(-Math.PI / 2),
-  new THREE.MeshStandardMaterial({ roughness: 0.5, color: "red" })
-);
-floor.receiveShadow = true;
-scene.add(floor);
-
 const clock = new THREE.Clock();
-const radius = 10;
+
+
+const amlight = new THREE.AmbientLight(0xFFFFFF, 3)
+amlight.position.set(0, -12, 0)
+scene.add(amlight)
+let addDirLights = (x, y, z, target, intensity) => {
+  const light = new THREE.DirectionalLight("#ffffff", intensity);
+  light.castShadow = true;
+  light.position.set(x, y, z)
+  light.target = target
+  scene.add(light);
+  // const helper = new THREE.DirectionalLightHelper(light);
+  // scene.add(helper)
+}
+
+
 
 // request animation frame
 
@@ -84,11 +102,17 @@ async function setupEnv() {
   tex.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = tex;
   scene.environment = tex;
-  // scene.background = new THREE.Color(255, 255, 255);
-  // scene.environment = tex;
 }
 
 global.mixer = null
+global.pivotModel = new THREE.Group();
+global.firstScreen = true
+addDirLights(0, 10, 0, global.pivotModel, 2)
+addDirLights(-20, 10, 0, global.pivotModel, 2)
+addDirLights(20, 10, 0, global.pivotModel, 2)
+
+
+
 
 async function setupMeshTransmissionMaterial() {
   const mtmParams = {
@@ -107,12 +131,35 @@ async function setupMeshTransmissionMaterial() {
     action.play();
   }
 
-  model.position.y = 0.9;
+
+  model.scale.set(1.4, 1.4, 1.4)
+  model.position.set(0, -12, 0)
+
+
+  // const axis = new THREE.Vector3(-1, 0, 0); // Y-axis
+  // const angle = Math.PI / 4; // 90 degrees in radians
+  // const quaternion = new THREE.Quaternion();
+  // quaternion.setFromAxisAngle(axis.normalize(), angle);
+
+  // model.quaternion.copy(quaternion)
+
+
+  // addDirLights(20, 15, 5, model, 2)
+  // addDirLights(0, 10, 0, model, 2)
+  // addDirLights(0, 10, 10, model, 5)
+
+
+
+
+
   const discardMaterial = new MeshDiscardMaterial();
+
   const meshTransmissionMaterial = new MeshTransmissionMaterial({
     anisotropy: 0.5,
+
   });
 
+  meshTransmissionMaterial.reflectivity = 0.0;
   const meshes = [];
   model.traverse((child) => {
     if (child.isMesh) {
@@ -120,29 +167,42 @@ async function setupMeshTransmissionMaterial() {
       child.castShadow = true;
       child.receiveShadow = true;
       child.selectOnRaycast = model;
-
       if (child.name === "Circle") {
         child.material = meshTransmissionMaterial;
         meshes.push(child);
-        gui.add(child, "visible").name("Glass visible");
+        // gui.add(child, "visible").name("Glass visible");
+        // child.position.set(12, -11, 0)
+
+      }
+      if (child.name === "Cylinder") {
+
+        child.material = meshTransmissionMaterial;
+        meshes.push(child);
+        // gui.add(child, "visible").name("Glass visible");
       }
       if (child.name === "liquid") {
         child.material.color.set("#0000ff");
         child.scale.setScalar(15); //default is 20
-        gui
-          .add(child.scale, "x", 1, 20)
-          .name("Liquid scale")
-          .onChange((v) => {
-            child.scale.setScalar(v); // set same value for x y and z
-          });
+        // gui
+        //   .add(child.scale, "x", 1, 20)
+        //   .name("Liquid scale")
+        //   .onChange((v) => {
+        //     child.scale.setScalar(v); // set same value for x y and z
+        //   });
       }
     }
   });
-  scene.add(model);
 
-  meshTransmissionMaterial.reflectivity = 0.04;
+  global.pivotModel.add(model)
+  global.pivotModel.scale.set(0, 0, 0)
+  scene.add(global.pivotModel)
 
-  addTransmissionGui(gui, meshTransmissionMaterial, mtmParams);
+  // global.pivotModel.rotation.z += Math.PI/4
+  // global.pivotModel.rotation.x += -2*(Math.PI/6)
+
+
+
+  // addTransmissionGui(gui, meshTransmissionMaterial, mtmParams);
 
   const fboBack = new THREE.WebGLRenderTarget(256, 256, {
     minFilter: THREE.LinearFilter,
@@ -168,17 +228,9 @@ async function setupMeshTransmissionMaterial() {
     camera,
   };
 
-  // const clock = new THREE.Clock(true);
-
-
-
   // run on every frame
   meshTransmissionMaterialUpdate = (elapsed, delta) => {
     mtm.time = elapsed
-
-
-
-
     for (const mesh of meshes) {
       const parent = mesh;
 
@@ -224,6 +276,8 @@ async function setupMeshTransmissionMaterial() {
       }
     }
   };
+
+
 }
 
 function addTransmissionGui(gui, mat, mtmParams) {
@@ -245,7 +299,6 @@ function addTransmissionGui(gui, mat, mtmParams) {
   fol.addColor(mat, "attenuationColor");
   fol.add(mat, "attenuationDistance", 0, 2);
 }
-
 
 const loadTexture = async (url) => {
   let textureLoader = new THREE.TextureLoader()
@@ -306,7 +359,7 @@ let app = {
 
 
     this.container.style.touchAction = 'none'
-    this.container.addEventListener('pointermove', this.onPointerMove.bind(this))
+    document.body.addEventListener('pointermove', this.onPointerMove.bind(this))
 
     const sun = new THREE.DirectionalLight(0xFFFFFF, 0.6)
     sun.position.set(300, 400, 175)
@@ -631,7 +684,6 @@ void main()	{
         `
 
     this.smoothShader = this.gpuCompute.createShaderMaterial(smoothSh, { smoothTexture: { value: null } })
-    console.log('hehe')
 
   },
   fillTexture(texture) {
@@ -692,12 +744,25 @@ void main()	{
   updateScene(interval, elapsed) {
 
     // Set uniforms: mouse interaction
+
+
     const hmUniforms = this.heightmapVariable.material.uniforms
     if (this.mouseMoved) {
 
       this.raycaster.setFromCamera(this.mouseCoords, camera)
 
       const intersects = this.raycaster.intersectObject(this.waterMesh)
+
+      // if (global.firstScreen) {
+        gsap.to(global.pivotModel.rotation, {
+          z: -this.mouseCoords.x * (Math.PI / 6),
+          y: this.mouseCoords.x * (Math.PI / 6),
+          x: this.mouseCoords.y * (Math.PI / 8),
+          duration: 0,
+          ease: "none"
+        })
+      // }
+
 
       if (intersects.length > 0) {
         const point = intersects[0].point
@@ -720,56 +785,167 @@ void main()	{
 }
 
 
-let main = async () => {
-  await setupEnv();
-  await setupMeshTransmissionMaterial();
-  await app.initScene()
+let playAnimations = () => {
 
-  // renderer.setAnimationLoop(() => {
-  //   const time = clock.getElapsedTime();
-  //   const delta = clock.getDelta()
-  //   console.log(delta)
-  //   if (global.mixer != null) {
-  //     global.mixer.update()
-  //     // console.log(delta)
-  //   }
-  //   helper.update();
-  //   meshTransmissionMaterialUpdate(time, delta);
-  //   app.updateScene(delta, time)
-  //   controls.update();
-  //   renderer.render(scene, camera);
-  // });
+  let t1 = gsap.timeline()
 
-  gui.add(paramsa, "transparentBG").onChange((v) => {
-    console.log(scene.background, scene.environment);
-    scene.background = v ? null : new THREE.Color(255, 255, 255);
-    scene.environment = new THREE.Color();
-  });
-  gui.addColor(paramsa, "bgColor");
+  t1.to(global.pivotModel.position, {
+    x: 0,
+    y: 0,
+    z: 0,
+    duration: 1,
+    ease: "power2.out",
+  })
+    .fromTo(global.pivotModel.scale, {
+      x: 0,
+      y: 0,
+      z: 0,
+      ease: "power2.out",
+    }, {
+      x: 1,
+      y: 1,
+      z: 1,
+      duration: 1.5,
+      ease: "power2.out",
+    })
+    .to(global.pivotModel.scale,
+      {
+        z: 1.05,
+        y: 1.05,
+        x: 1.05,
+        duration: 1.5,
+        yoyo: true,
+        repeat: -1
+      })
+    .to(global.pivotModel.position, {
+      scrollTrigger: {
+        trigger: ".section2",
+        start: "start bottom",
+        end: "center bottom",
+        scrub: 1,
+        // markers: true,
+      },
+      x: -20,
+      y: 2,
+      z: 0,
+      duration: 2,
+      ease: "power2.out",
+      onStart: () => {
+        console.log('started')
+        global.firstScreen = false
+        gsap.to(global.pivotModel.rotation, {
+          x: 0,
+          z: 0,
+          duration: 0.5,
+          ease: "power2.out"
+        })
+      },
+      onReverseComplete: () => {
+        global.firstScreen = true
+      }
+    })
+    .to(global.pivotModel.rotation, {
+      scrollTrigger: {
+        trigger: ".section2",
+        start: "start bottom",
+        end: "center bottom",
+        scrub: true,
+        // markers: true,
+      },
+      y: 2 * Math.PI,
+      duration: 2,
+      ease: "power2.out",
+    })
+    .fromTo(global.pivotModel.position,
+      {
+        x: -20,
+        y: 2,
+        z: 0,
+      },
+      {
+        scrollTrigger: {
+          trigger: ".section3",
+          scrub: 1,
+          // markers: true,
 
-  // console.log(scene.background, scene.environment);
-  render()
-
+          end: "center bottom",
+        },
+        x: 20,
+        y: 2,
+        z: 0,
+      },
+    )
+    .to(global.pivotModel.rotation, {
+      scrollTrigger: {
+        trigger: ".section3",
+        end: "center bottom",
+        scrub: true,
+        // markers: true,
+      },
+      y: -4 * Math.PI,
+      // duration: 2,
+      ease: "power2.out",
+    })
+    .fromTo(global.pivotModel.position,
+      {
+        x: 20,
+        y: 2,
+        z: 0,
+      },
+      {
+        scrollTrigger: {
+          trigger: ".section4",
+          scrub: 1,
+          markers: true,
+          end: "center bottom",
+        },
+        onStart: () => {
+          global.firstScreen = true
+          console.log('huhu')
+        },
+        onReverseComplete: () => {
+          global.firstScreen = false
+          gsap.to(global.pivotModel.rotation, {
+            x: 0,
+            z: 0,
+            duration: 0.5,
+            ease: "power2.out"
+          })
+        },
+        x: 0,
+        y: 2,
+        z: 0,
+      },
+    )
 }
 
 function render() {
+  stats.begin()
   requestAnimationFrame(render)
-
-  
   const delta = clock.getDelta()
 
-  if (global.mixer != null) {
-    global.mixer.update(delta)
-    // console.log(delta)
-  }
-  // const elapsedclock.elapsedTime
-  helper.update();
+  // if (global.mixer != null) {
+  //   global.mixer.update(delta)
+  //   // console.log(delta)
+  // }
+  // helper.update();
   meshTransmissionMaterialUpdate(clock.elapsedTime);
   app.updateScene()
-  controls.update();
 
   renderer.render(scene, camera);
+  stats.end()
 }
+
+let main = async () => {
+
+  await setupEnv();
+  await setupMeshTransmissionMaterial();
+  await app.initScene()
+  render()
+  playAnimations()
+
+}
+
 
 main()
 
