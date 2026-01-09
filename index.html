@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
+  <link rel="stylesheet" href="./splide.min.css">
   <link rel="stylesheet" href="style.css">
 
 </head>
@@ -10,9 +11,21 @@
 <body>
   <canvas></canvas>
   <div class="outerContainer">
+    <nav>
+      <div class="nav-container">
+        <p>ABOUT US</p>
+        <p>PRODUCTS</p>
+        <img class="logo" src="./assets/logo.png" alt="logo Image">
+        <p>OUR IMPACT</p>
+        <p>CONTACT US</p>
+      </div>
+    </nav>
     <section class="section1">
-      <img class="logo" src="./assets/logo.png" alt="logo Image">
       <h1>Your Sustainable <i>Hydration</i> Partner</h1>
+      <div class="legal-container">
+        <p>LEGAL</p>
+        <p>COOKIES</p>
+      </div>
     </section>
     <section class="section2">
       <h1>Making every <br><i>bottle</i> count.</h1>
@@ -66,8 +79,8 @@
     </section>
     <section class="section4">
       <div class="cards-container">
-        <div>
-          <div class="card-container">
+        <div class="card1container">
+          <div class="card-container card1">
             <img src="./assets/sustainability.png" alt="">
             <h3 class="cyan-color">SUSTAINABILITY LEADERS</h3>
             <p>Our clients are passionate about sustainability and recognize the importance of reducing plastic waste.
@@ -76,8 +89,8 @@
               part of the solution to the plastic pollution crisis.</p>
           </div>
         </div>
-        <div>
-          <div class="card-container">
+        <div class="card2container">
+          <div class="card-container card2">
             <img src="./assets/wellness.png" alt="">
             <h3 class="purple-color">HEALTH & WELLNESS ADVOCATES</h3>
             <p>Our clients are passionate about sustainability and recognize the importance of reducing plastic waste.
@@ -86,8 +99,8 @@
               part of the solution to the plastic pollution crisis.</p>
           </div>
         </div>
-        <div>
-          <div class="card-container">
+        <div class="card3container">
+          <div class="card-container card3">
             <img src="./assets/eco.png" alt="">
             <h3 class="cyan-color">ECO-CONSCIOUS BUSINESS</h3>
             <p>Our clients are passionate about sustainability and recognize the importance of reducing plastic waste.
@@ -96,6 +109,53 @@
               part of the solution to the plastic pollution crisis.</p>
           </div>
         </div>
+      </div>
+    </section>
+    <section class="section5">
+      <h1>Our Products</h1>
+      <div class="carousel-container">
+        <div class="splide">
+          <div class="splide__track">
+            <ul class="splide__list">
+              <li class="splide__slide">
+                <div class="item">
+                  <img src="./products/2.jpeg" alt="">
+                  <button>Buy Now</button>
+                </div>
+              </li>
+              <li class="splide__slide">
+                <div class="item">
+                  <img src="./products/5.jpeg" alt="">
+                  <button>Buy Now</button>
+
+                </div>
+              </li>
+              <li class="splide__slide">
+                <div class="item">
+                  <img src="./products/6.jpeg" alt="">
+                  <button>Buy Now</button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section6">
+      <h1>Trusted Among Industry Leaders</h1>
+      <p>
+        At Surayee, we are honored to have a wide range of clients who have joined us in our mission to create a
+        sustainable and healthier future. Our commitment to replacing single-use plastic water bottles with premium
+        glass bottles and providing alkaline water for better health has resonated with restaurants/cafes and event
+        organizations.
+      </p>
+      <div class="client-container">
+        <img src="./clients/coke.png" alt="">
+        <img src="./clients/costco.png" alt="">
+        <img src="./clients/google.png" alt="">
+        <img src="./clients/pepsi.png" alt="">
+        <img src="./clients/netflix.png" alt="">
+        <img src="./clients/microsoft.png" alt="">
       </div>
     </section>
   </div>

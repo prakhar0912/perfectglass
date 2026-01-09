@@ -16,9 +16,9 @@ import { MeshTransmissionMaterial, MeshDiscardMaterial } from "@pmndrs/vanilla";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import { SimplexNoise } from "three-stdlib";
 import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer"
+import Splide from "@splidejs/splide";
 
-
-import Mountains from "../assets/whitehex.jpg"
+import Mountains from "../assets/glasshex.jpg"
 import transparent from "../public/transparent.hdr"
 import glassBottle from "../public/finalbottle1.glb"
 
@@ -309,6 +309,34 @@ const loadTexture = async (url) => {
   })
 }
 
+
+function createColorTexture(color) {
+  // Define the color in RGBA format (0-255 range)
+  const colorInt = new THREE.Color(color);
+  const r = Math.floor(colorInt.r * 255);
+  const g = Math.floor(colorInt.g * 255);
+  const b = Math.floor(colorInt.b * 255);
+  const a = 255; // Fully opaque
+
+  // Create a Uint8Array for a 1x1 pixel
+  const data = new Uint8Array([r, g, b, a]);
+
+  // Create the DataTexture
+  const texture = new THREE.DataTexture(
+    data,
+    1, // width
+    1, // height
+    THREE.RGBAFormat,
+    THREE.UnsignedByteType
+  );
+
+  texture.needsUpdate = true; // Important to mark as updated
+
+  return texture;
+}
+
+
+
 const params = {
   // general scene params
   mouseSize: 0.5,
@@ -324,11 +352,10 @@ const GEOM_WIDTH = window.innerWidth / 30
 const GEOM_HEIGHT = window.innerWidth / 60
 
 const simplex = new SimplexNoise()
-
 let app = {
   async initScene() {
 
-    const color = new THREE.Color(1, 1, 1);
+    const color = new THREE.Color(0x000000);
     const width = 1;
     const height = 1;
 
@@ -340,8 +367,8 @@ let app = {
     data[3] = 255; // Alpha (fully opaque)
 
     // Create the DataTexture
-    const colorTexture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
-    colorTexture.needsUpdate = true;
+    this.colorTexture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
+    this.colorTexture.needsUpdate = true;
 
 
     // let Texture = colorTexture
@@ -543,7 +570,7 @@ void main() {
         `
 
     // material: make a THREE.ShaderMaterial clone of THREE.MeshPhongMaterial, with customized vertex shader
-    const material = new THREE.ShaderMaterial({
+    this.material = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([
         THREE.ShaderLib['phong'].uniforms,
         {
@@ -554,36 +581,37 @@ void main() {
       fragmentShader: waterFragment
     });
 
-    material.lights = true
+    this.material.lights = true
 
     // Material attributes from THREE.MeshPhongMaterial
     // for the color map to work, we need all 3 lines (define material.color, material.map and material.uniforms[ 'map' ].value)
-    material.color = new THREE.Color(materialColor)
-    material.specular = new THREE.Color(0x111111)
-    material.shininess = 50
-    material.map = Texture
+    this.material.color = new THREE.Color(materialColor)
+    this.material.specular = new THREE.Color(0x111111)
+    this.material.shininess = 100
+    this.material.map = Texture
 
     // Sets the uniforms with the material values
-    material.uniforms['diffuse'].value = material.color
-    material.uniforms['specular'].value = material.specular
-    material.uniforms['shininess'].value = Math.max(material.shininess, 1e-4)
-    material.uniforms['opacity'].value = material.opacity
-    material.uniforms['map'].value = Texture
+    this.material.uniforms['diffuse'].value = this.material.color
+    this.material.uniforms['specular'].value = this.material.specular
+    this.material.uniforms['shininess'].value = Math.max(this.material.shininess, 1e-4)
+    this.material.uniforms['opacity'].value = this.material.opacity
+    this.material.uniforms['map'].value = Texture
 
     // Defines
-    material.defines.FBO_WIDTH = FBO_WIDTH.toFixed(1)
-    material.defines.FBO_HEIGHT = FBO_HEIGHT.toFixed(1)
-    material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
-    material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
+    this.material.defines.FBO_WIDTH = FBO_WIDTH.toFixed(1)
+    this.material.defines.FBO_HEIGHT = FBO_HEIGHT.toFixed(1)
+    this.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
+    this.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
 
-    this.waterUniforms = material.uniforms
+    this.waterUniforms = this.material.uniforms
 
-    this.waterMesh = new THREE.Mesh(geometry, material)
+    this.waterMesh = new THREE.Mesh(geometry, this.material)
     this.waterMesh.matrixAutoUpdate = false
     this.waterMesh.position.set(0, 0, -5)
     this.waterMesh.updateMatrix()
 
     scene.add(this.waterMesh)
+    // addDirLights(0,0,-1, this.waterMesh, 2)
 
     // Creates the gpu computation class and sets it up
     this.gpuCompute = new GPUComputationRenderer(FBO_WIDTH, FBO_HEIGHT, renderer)
@@ -687,7 +715,7 @@ void main()	{
 
   },
   fillTexture(texture) {
-    const waterMaxHeight = 0.008;
+    const waterMaxHeight = 0.009;
 
     function noise(x, y) {
       let multR = waterMaxHeight;
@@ -745,7 +773,19 @@ void main()	{
 
     // Set uniforms: mouse interaction
 
-
+    if (global.firstScreen) {
+      gsap.to(global.pivotModel.rotation, {
+        z: -this.mouseCoords.x * (Math.PI / 6),
+        y: this.mouseCoords.x * (Math.PI / 6),
+        x: this.mouseCoords.y * (Math.PI / 8),
+        duration: 0,
+        ease: "none"
+      })
+    }
+    else {
+      // this.material.map = this.colorTexture
+      // this.material.uniforms['map'].value = this.colorTexture
+    }
     const hmUniforms = this.heightmapVariable.material.uniforms
     if (this.mouseMoved) {
 
@@ -753,15 +793,7 @@ void main()	{
 
       const intersects = this.raycaster.intersectObject(this.waterMesh)
 
-      // if (global.firstScreen) {
-        gsap.to(global.pivotModel.rotation, {
-          z: -this.mouseCoords.x * (Math.PI / 6),
-          y: this.mouseCoords.x * (Math.PI / 6),
-          x: this.mouseCoords.y * (Math.PI / 8),
-          duration: 0,
-          ease: "none"
-        })
-      // }
+
 
 
       if (intersects.length > 0) {
@@ -836,7 +868,7 @@ let playAnimations = () => {
         gsap.to(global.pivotModel.rotation, {
           x: 0,
           z: 0,
-          duration: 0.5,
+          duration: 0.1,
           ease: "power2.out"
         })
       },
@@ -896,7 +928,7 @@ let playAnimations = () => {
         scrollTrigger: {
           trigger: ".section4",
           scrub: 1,
-          markers: true,
+          // markers: true,
           end: "center bottom",
         },
         onStart: () => {
@@ -908,7 +940,7 @@ let playAnimations = () => {
           gsap.to(global.pivotModel.rotation, {
             x: 0,
             z: 0,
-            duration: 0.5,
+            duration: 0.1,
             ease: "power2.out"
           })
         },
@@ -917,6 +949,79 @@ let playAnimations = () => {
         z: 0,
       },
     )
+  gsap.to(".card1",
+    {
+      scrollTrigger: {
+        trigger: ".card1container",
+        scrub: 1,
+        // markers: true,
+        start: "-300px center",
+        end: "bottom center",
+      },
+      keyframes: [
+        { scale: 1.1 },
+        { scale: 1 }
+      ],
+      rotateY: "90deg",
+      y: -300,
+      x: window.innerWidth / 1.5,
+      ease: "none"
+    }
+  )
+
+  gsap.to(".card2",
+    {
+      scrollTrigger: {
+        trigger: ".card2container",
+        scrub: 1,
+        // markers: true,
+        start: "-300px center",
+        end: "bottom center",
+      },
+      keyframes: [
+        { scale: 1.1 },
+        { scale: 1 }
+      ],
+      rotateY: "90deg",
+      y: -300,
+      x: window.innerWidth / 1.5,
+      ease: "none"
+
+    }
+  )
+
+  gsap.to(".card3",
+    {
+      scrollTrigger: {
+        trigger: ".card3container",
+        scrub: 1,
+        // markers: true,
+        start: "-300px center",
+        end: "bottom center",
+        onLeave: () => {
+          console.log('comp')
+          global.pivotModel.visible = false
+        },
+        onEnterBack: () => {
+          console.log('reenter')
+          global.pivotModel.visible = true
+        }
+      },
+      keyframes: [
+        { scale: 1.1 },
+        { scale: 1 }
+      ],
+      rotateY: "90deg",
+      y: -300,
+      x: window.innerWidth / 1.5,
+      ease: "none",
+    }
+  )
+  new Splide('.splide', {
+    type: 'loop',
+    perPage: 3,
+    focus: 'center'
+  }).mount();
 }
 
 function render() {
