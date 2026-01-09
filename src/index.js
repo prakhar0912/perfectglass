@@ -23,7 +23,7 @@ import transparent from "../public/transparent.hdr"
 import glassBottle from "../public/finalbottle1.glb"
 
 
-
+const imageAspect = 1.7775510
 const stats = new Stats();
 // 0: fps (frames per second), 1: ms (milliseconds per frame), 2: mb (memory)
 stats.showPanel(0);
@@ -348,8 +348,8 @@ const params = {
 const FBO_WIDTH = 512
 const FBO_HEIGHT = 256
 // Water size in system units
-const GEOM_WIDTH = window.innerWidth / 30
-const GEOM_HEIGHT = window.innerWidth / 60
+let GEOM_WIDTH = window.innerWidth / 30
+let GEOM_HEIGHT = window.innerWidth / 60
 
 const simplex = new SimplexNoise()
 let app = {
@@ -385,7 +385,7 @@ let app = {
 
 
 
-    this.container.style.touchAction = 'none'
+    // this.container.style.touchAction = 'none'
     document.body.addEventListener('pointermove', this.onPointerMove.bind(this))
 
     const sun = new THREE.DirectionalLight(0xFFFFFF, 0.6)
@@ -578,7 +578,7 @@ void main() {
         }
       ]),
       vertexShader: waterVertex,
-      fragmentShader: waterFragment
+      fragmentShader: waterFragment,
     });
 
     this.material.lights = true
@@ -606,8 +606,18 @@ void main() {
     this.waterUniforms = this.material.uniforms
 
     this.waterMesh = new THREE.Mesh(geometry, this.material)
+    // let aspectRatio = window.innerWidth/window.innerHeight
+    // if (imageAspect > aspectRatio) {
+    //   scale = [imageAspect / aspectRatio, 1]
+    // }
+    // else {
+    //   scale = [1, aspectRatio / imageAspect]
+    // }
+    // this.waterMesh.scale.set(scale[0], scale[1],1)
     this.waterMesh.matrixAutoUpdate = false
     this.waterMesh.position.set(0, 0, -5)
+    // this.waterMesh.scale.set(2,2,1)
+    
     this.waterMesh.updateMatrix()
 
     scene.add(this.waterMesh)
@@ -672,7 +682,6 @@ void main()	{
 
     this.heightmapVariable = this.gpuCompute.addVariable('heightmap', heightMapShader, heightmap0)
 
-    console.log(this.heightmapVariable)
     this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable])
 
     this.heightmapVariable.material.uniforms['mousePos'] = { value: new THREE.Vector2(10000, 10000) }
@@ -713,6 +722,26 @@ void main()	{
 
     this.smoothShader = this.gpuCompute.createShaderMaterial(smoothSh, { smoothTexture: { value: null } })
 
+  },
+  resize(scale) {
+    // console.log('in')
+    // GEOM_WIDTH = window.innerWidth / 30
+    // GEOM_HEIGHT = window.innerWidth / 60
+    // this.waterMesh.geometry.dispose()
+    // this.waterMesh.geometry = new THREE.PlaneGeometry(GEOM_WIDTH, GEOM_HEIGHT, FBO_WIDTH, FBO_HEIGHT)
+    // this.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
+    // this.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
+    // this.heightmapVariable.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
+    // this.heightmapVariable.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
+    // console.log(scale[0], scale[1])
+    // this.waterMesh.verticesNeedUpdate = true
+    // this.waterMesh.matrixAutoUpdate = true
+
+
+    this.waterMesh.scale.set(scale[0], scale[1], 1)
+    this.waterMesh.updateMatrix()
+
+    // console.log(this.waterMesh.scale)
   },
   fillTexture(texture) {
     const waterMaxHeight = 0.009;
@@ -854,6 +883,7 @@ let playAnimations = () => {
         trigger: ".section2",
         start: "start bottom",
         end: "center bottom",
+        invalidateOnRefresh: true,
         scrub: 1,
         // markers: true,
       },
@@ -881,6 +911,7 @@ let playAnimations = () => {
         trigger: ".section2",
         start: "start bottom",
         end: "center bottom",
+        invalidateOnRefresh: true,
         scrub: true,
         // markers: true,
       },
@@ -897,6 +928,7 @@ let playAnimations = () => {
       {
         scrollTrigger: {
           trigger: ".section3",
+          invalidateOnRefresh: true,
           scrub: 1,
           // markers: true,
 
@@ -911,6 +943,7 @@ let playAnimations = () => {
       scrollTrigger: {
         trigger: ".section3",
         end: "center bottom",
+        invalidateOnRefresh: true,
         scrub: true,
         // markers: true,
       },
@@ -928,6 +961,7 @@ let playAnimations = () => {
         scrollTrigger: {
           trigger: ".section4",
           scrub: 1,
+          invalidateOnRefresh: true,
           // markers: true,
           end: "center bottom",
         },
@@ -954,6 +988,7 @@ let playAnimations = () => {
       scrollTrigger: {
         trigger: ".card1container",
         scrub: 1,
+        invalidateOnRefresh: true,
         // markers: true,
         start: "-300px center",
         end: "bottom center",
@@ -974,6 +1009,7 @@ let playAnimations = () => {
       scrollTrigger: {
         trigger: ".card2container",
         scrub: 1,
+        invalidateOnRefresh: true,
         // markers: true,
         start: "-300px center",
         end: "bottom center",
@@ -995,6 +1031,7 @@ let playAnimations = () => {
       scrollTrigger: {
         trigger: ".card3container",
         scrub: 1,
+        invalidateOnRefresh: true,
         // markers: true,
         start: "-300px center",
         end: "bottom center",
@@ -1023,6 +1060,51 @@ let playAnimations = () => {
     focus: 'center'
   }).mount();
 }
+
+
+function onWindowResize() {
+  const newWidth = window.innerWidth;
+  const newHeight = window.innerHeight;
+
+  // 1. Update the renderer size
+  renderer.setSize(newWidth, newHeight);
+
+  // Optional: Adjust the pixel ratio for clarity
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // 2. Calculate the new aspect ratio
+  const aspectRatio = newWidth / newHeight;
+  let scale = [1, 1]
+  if (imageAspect > aspectRatio) {
+    scale = [imageAspect / aspectRatio, 1]
+  }
+  else {
+    scale = [1, aspectRatio / imageAspect]
+  }
+
+  // 3. Update the camera's frustum boundaries
+  // You need a reference value for the view size (e.g., a fixed height or a "camFactor")
+  // In this example, 'viewSize' is a constant that defines the vertical extents.
+  const viewSize = 30; // Example value, adjust as needed
+
+  // camera.left = -aspectRatio * viewSize / 2;
+  // camera.right = aspectRatio * viewSize / 2;
+  // camera.top = viewSize / 2;
+  // camera.bottom = -viewSize / 2;
+
+  // camera.left = window.innerWidth / -60, // left
+  //   camera.right = window.innerWidth / 60, // right
+  //   camera.top = window.innerHeight / 60, // top
+  //   camera.bottom = window.innerHeight / -60, // bottom
+
+  // 4. Update the camera's projection matrix
+  camera.updateProjectionMatrix();
+  app.resize(scale)
+  console.log('rsize')
+  // ScrollTrigger.refresh();
+}
+
+window.addEventListener('resize', onWindowResize, false);
 
 function render() {
   stats.begin()
