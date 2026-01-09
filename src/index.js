@@ -56,6 +56,7 @@ gltfLoader.setDRACOLoader(draco);
 // const gui = new GUI();
 
 let meshTransmissionMaterialUpdate = () => { };
+let resize = () => {}
 
 let canvas = document.querySelector("canvas")
 const renderer = new THREE.WebGLRenderer({ alpha: true, canvas });
@@ -227,7 +228,10 @@ async function setupMeshTransmissionMaterial() {
     scene,
     camera,
   };
-
+  resize = (scale) => {
+    console.log('hee')
+    // global.pivotModel.scale.set(scale[0], scale[1], 1)
+  }
   // run on every frame
   meshTransmissionMaterialUpdate = (elapsed, delta) => {
     mtm.time = elapsed
@@ -349,7 +353,7 @@ const FBO_WIDTH = 512
 const FBO_HEIGHT = 256
 // Water size in system units
 let GEOM_WIDTH = window.innerWidth / 30
-let GEOM_HEIGHT = window.innerWidth / 60
+let GEOM_HEIGHT = window.innerHeight / 30
 
 const simplex = new SimplexNoise()
 let app = {
@@ -606,14 +610,14 @@ void main() {
     this.waterUniforms = this.material.uniforms
 
     this.waterMesh = new THREE.Mesh(geometry, this.material)
-    // let aspectRatio = window.innerWidth/window.innerHeight
-    // if (imageAspect > aspectRatio) {
-    //   scale = [imageAspect / aspectRatio, 1]
-    // }
-    // else {
-    //   scale = [1, aspectRatio / imageAspect]
-    // }
-    // this.waterMesh.scale.set(scale[0], scale[1],1)
+    let aspectRatio = window.innerWidth/window.innerHeight
+    if (imageAspect > aspectRatio) {
+      scale = [imageAspect / aspectRatio, 1]
+    }
+    else {
+      scale = [1, aspectRatio / imageAspect]
+    }
+    this.waterMesh.scale.set(scale[0], scale[1],1)
     this.waterMesh.matrixAutoUpdate = false
     this.waterMesh.position.set(0, 0, -5)
     // this.waterMesh.scale.set(2,2,1)
@@ -724,24 +728,8 @@ void main()	{
 
   },
   resize(scale) {
-    // console.log('in')
-    // GEOM_WIDTH = window.innerWidth / 30
-    // GEOM_HEIGHT = window.innerWidth / 60
-    // this.waterMesh.geometry.dispose()
-    // this.waterMesh.geometry = new THREE.PlaneGeometry(GEOM_WIDTH, GEOM_HEIGHT, FBO_WIDTH, FBO_HEIGHT)
-    // this.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
-    // this.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
-    // this.heightmapVariable.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
-    // this.heightmapVariable.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
-    // console.log(scale[0], scale[1])
-    // this.waterMesh.verticesNeedUpdate = true
-    // this.waterMesh.matrixAutoUpdate = true
-
-
     this.waterMesh.scale.set(scale[0], scale[1], 1)
     this.waterMesh.updateMatrix()
-
-    // console.log(this.waterMesh.scale)
   },
   fillTexture(texture) {
     const waterMaxHeight = 0.009;
@@ -1100,6 +1088,7 @@ function onWindowResize() {
   // 4. Update the camera's projection matrix
   camera.updateProjectionMatrix();
   app.resize(scale)
+  resize(scale)
   console.log('rsize')
   // ScrollTrigger.refresh();
 }
