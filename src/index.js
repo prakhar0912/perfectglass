@@ -24,6 +24,7 @@ import glassBottle from "../public/finalbottle1.glb"
 
 
 const imageAspect = 1.7775510
+const modelAspect = 0.01
 const stats = new Stats();
 // 0: fps (frames per second), 1: ms (milliseconds per frame), 2: mb (memory)
 stats.showPanel(0);
@@ -56,7 +57,7 @@ gltfLoader.setDRACOLoader(draco);
 // const gui = new GUI();
 
 let meshTransmissionMaterialUpdate = () => { };
-let resize = () => {}
+let resize = () => { }
 
 let canvas = document.querySelector("canvas")
 const renderer = new THREE.WebGLRenderer({ alpha: true, canvas });
@@ -228,9 +229,28 @@ async function setupMeshTransmissionMaterial() {
     scene,
     camera,
   };
-  resize = (scale) => {
-    console.log('hee')
-    // global.pivotModel.scale.set(scale[0], scale[1], 1)
+  resize = () => {
+    let scale = [100/window.innerWidth, 100/window.innerHeight]
+    // if (modelAspect > aspectRatio) {
+    //   scale = [modelAspect / aspectRatio, 1]
+    // }
+    // else {
+    //   scale = [modelAspect / aspectRatio, 1]
+    // }
+
+    // global.pivotModel.matrixAutoUpdate = true
+    // global.pivotModel.updateMatrix()
+    global.pivotModel.scale.set(scale[0], scale[1])
+    console.log(scale, global.pivotModel.scale)
+
+    // gsap.to(global.pivotModel.scale, {
+    //   x: scale[0],
+    //   y: scale[1],
+    //   duration: 0.01,
+    // })
+    // global.pivotModel.scale.set(scale[0] + 2, scale[1] + 2, 1)
+    // global.pivotModel.updateMatrix()
+
   }
   // run on every frame
   meshTransmissionMaterialUpdate = (elapsed, delta) => {
@@ -610,18 +630,18 @@ void main() {
     this.waterUniforms = this.material.uniforms
 
     this.waterMesh = new THREE.Mesh(geometry, this.material)
-    let aspectRatio = window.innerWidth/window.innerHeight
+    let aspectRatio = window.innerWidth / window.innerHeight
     if (imageAspect > aspectRatio) {
       scale = [imageAspect / aspectRatio, 1]
     }
     else {
       scale = [1, aspectRatio / imageAspect]
     }
-    this.waterMesh.scale.set(scale[0], scale[1],1)
+    this.waterMesh.scale.set(scale[0], scale[1], 1)
     this.waterMesh.matrixAutoUpdate = false
     this.waterMesh.position.set(0, 0, -5)
     // this.waterMesh.scale.set(2,2,1)
-    
+
     this.waterMesh.updateMatrix()
 
     scene.add(this.waterMesh)
@@ -728,6 +748,8 @@ void main()	{
 
   },
   resize(scale) {
+    this.waterMesh.geometry.dispose()
+    this.waterMesh.geometry = new THREE.PlaneGeometry(window.innerWidth / 30, window.innerHeight / 30, FBO_WIDTH, FBO_HEIGHT)
     this.waterMesh.scale.set(scale[0], scale[1], 1)
     this.waterMesh.updateMatrix()
   },
@@ -1080,15 +1102,15 @@ function onWindowResize() {
   // camera.top = viewSize / 2;
   // camera.bottom = -viewSize / 2;
 
-  // camera.left = window.innerWidth / -60, // left
-  //   camera.right = window.innerWidth / 60, // right
-  //   camera.top = window.innerHeight / 60, // top
-  //   camera.bottom = window.innerHeight / -60, // bottom
+  camera.left = window.innerWidth / -60, // left
+    camera.right = window.innerWidth / 60, // right
+    camera.top = window.innerHeight / 60, // top
+    camera.bottom = window.innerHeight / -60, // bottom
 
   // 4. Update the camera's projection matrix
   camera.updateProjectionMatrix();
   app.resize(scale)
-  resize(scale)
+  // resize() 
   console.log('rsize')
   // ScrollTrigger.refresh();
 }
