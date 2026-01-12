@@ -61,6 +61,7 @@ let resize = () => { }
 
 let canvas = document.querySelector("canvas")
 const renderer = new THREE.WebGLRenderer({ alpha: true, canvas });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -108,7 +109,13 @@ async function setupEnv() {
 
 global.mixer = null
 global.pivotModel = new THREE.Group();
-global.firstScreen = true
+global.rotateModel = true
+global.wireframe = false
+global.animationPosition = (window.innerWidth / 1900) * 20
+global.animationRotation = 6
+global.modelScale = 1.4
+global.stopPositionAnimation = false
+global.isMobile = true
 addDirLights(0, 10, 0, global.pivotModel, 2)
 addDirLights(-20, 10, 0, global.pivotModel, 2)
 addDirLights(20, 10, 0, global.pivotModel, 2)
@@ -134,7 +141,7 @@ async function setupMeshTransmissionMaterial() {
   }
 
 
-  model.scale.set(1.4, 1.4, 1.4)
+  model.scale.set(global.modelScale, global.modelScale, global.modelScale)
   model.position.set(0, -12, 0)
 
 
@@ -150,158 +157,176 @@ async function setupMeshTransmissionMaterial() {
   // addDirLights(0, 10, 0, model, 2)
   // addDirLights(0, 10, 10, model, 5)
 
-
-
-
-
-  const discardMaterial = new MeshDiscardMaterial();
-
-  const meshTransmissionMaterial = new MeshTransmissionMaterial({
-    anisotropy: 0.5,
-
-  });
-
-  meshTransmissionMaterial.reflectivity = 0.0;
-  const meshes = [];
-  model.traverse((child) => {
-    if (child.isMesh) {
-      console.log(child.name);
-      child.castShadow = true;
-      child.receiveShadow = true;
-      child.selectOnRaycast = model;
-      if (child.name === "Circle") {
-        child.material = meshTransmissionMaterial;
-        meshes.push(child);
-        // gui.add(child, "visible").name("Glass visible");
-        // child.position.set(12, -11, 0)
-
+  if (global.isMobile) {
+    model.traverse((child) => {
+      if (child.isMesh) {
+        const glassMat = new THREE.MeshPhysicalMaterial({
+          metalness: 0,
+          roughness: 1,
+          envMapIntensity: 0.9,
+          clearcoat: 1,
+          transparent: true,
+          transmission: .95,
+          opacity: 1,
+          reflectivity: 0.2,
+        })
+        child.material = glassMat
       }
-      if (child.name === "Cylinder") {
+    })
+  }
+  else {
+    const discardMaterial = new MeshDiscardMaterial();
 
-        child.material = meshTransmissionMaterial;
-        meshes.push(child);
-        // gui.add(child, "visible").name("Glass visible");
+    const meshTransmissionMaterial = new MeshTransmissionMaterial({
+      anisotropy: 0.5,
+
+    });
+
+    meshTransmissionMaterial.reflectivity = 0.0;
+    const meshes = [];
+    model.traverse((child) => {
+      if (child.isMesh) {
+        console.log(child.name);
+        child.castShadow = true;
+        child.receiveShadow = true;
+        child.selectOnRaycast = model;
+        if (child.name === "Circle") {
+          child.material = meshTransmissionMaterial;
+          meshes.push(child);
+          // gui.add(child, "visible").name("Glass visible");
+          // child.position.set(12, -11, 0)
+
+        }
+        if (child.name === "Cylinder") {
+          child.material = meshTransmissionMaterial;
+          meshes.push(child);
+          // gui.add(child, "visible").name("Glass visible");
+        }
+        if (child.name === "liquid") {
+          child.material.color.set("#0000ff");
+          child.scale.setScalar(15); //default is 20
+          // gui
+          //   .add(child.scale, "x", 1, 20)
+          //   .name("Liquid scale")
+          //   .onChange((v) => {
+          //     child.scale.setScalar(v); // set same value for x y and z
+          //   });
+        }
       }
-      if (child.name === "liquid") {
-        child.material.color.set("#0000ff");
-        child.scale.setScalar(15); //default is 20
-        // gui
-        //   .add(child.scale, "x", 1, 20)
-        //   .name("Liquid scale")
-        //   .onChange((v) => {
-        //     child.scale.setScalar(v); // set same value for x y and z
-        //   });
-      }
+    });
+
+
+
+    // global.pivotModel.rotation.z += Math.PI/4
+    // global.pivotModel.rotation.x += -2*(Math.PI/6)
+
+
+
+    // addTransmissionGui(gui, meshTransmissionMaterial, mtmParams);
+
+    const fboBack = new THREE.WebGLRenderTarget(256, 256, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      colorSpace: renderer.outputColorSpace,
+      type: THREE.HalfFloatType,
+    });
+    const fboMain = new THREE.WebGLRenderTarget(256, 256, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      colorSpace: renderer.outputColorSpace,
+      type: THREE.HalfFloatType,
+    });
+
+    const mtm = meshTransmissionMaterial;
+    mtm.buffer = fboMain.texture;
+    let oldBg;
+    let oldTone;
+    let oldSide;
+    const state = {
+      gl: renderer,
+      scene,
+      camera,
+    };
+    resize = () => {
+      let scale = [100 / window.innerWidth, 100 / window.innerHeight]
+      // if (modelAspect > aspectRatio) {
+      //   scale = [modelAspect / aspectRatio, 1]
+      // }
+      // else {
+      //   scale = [modelAspect / aspectRatio, 1]
+      // }
+
+      // global.pivotModel.matrixAutoUpdate = true
+      // global.pivotModel.updateMatrix()
+      global.pivotModel.scale.set(scale[0], scale[1])
+      console.log(scale, global.pivotModel.scale)
+
+      // gsap.to(global.pivotModel.scale, {
+      //   x: scale[0],
+      //   y: scale[1],
+      //   duration: 0.01,
+      // })
+      // global.pivotModel.scale.set(scale[0] + 2, scale[1] + 2, 1)
+      // global.pivotModel.updateMatrix()
+
     }
-  });
+    // run on every frame
+    meshTransmissionMaterialUpdate = (elapsed, delta) => {
+      if (global.wireframe == true) {
+        return
+      }
+      mtm.time = elapsed
+      for (const mesh of meshes) {
+        const parent = mesh;
 
-  global.pivotModel.add(model)
-  global.pivotModel.scale.set(0, 0, 0)
-  scene.add(global.pivotModel)
+        if (mtm.buffer === fboMain.texture) {
+          // Save defaults
+          oldTone = state.gl.toneMapping;
+          oldBg = state.scene.background;
+          oldSide = parent.material.side;
 
-  // global.pivotModel.rotation.z += Math.PI/4
-  // global.pivotModel.rotation.x += -2*(Math.PI/6)
+          // Switch off tonemapping lest it double tone maps
+          // Save the current background and set the HDR as the new BG
+          // Use discardMaterial, the parent will be invisible, but it's shadows will still be cast
+          state.gl.toneMapping = THREE.NoToneMapping;
+          if (mtmParams.customBackground)
+            state.scene.customBackground = mtmParams.background;
+          parent.material = discardMaterial;
 
+          if (mtmParams.backside) {
+            // Render into the backside buffer
+            state.gl.setRenderTarget(fboBack);
+            state.gl.render(state.scene, state.camera);
+            // And now prepare the material for the main render using the backside buffer
+            parent.material = mtm;
+            parent.material.buffer = fboBack.texture;
+            parent.material.thickness = mtmParams.backsideThickness;
+            parent.material.side = THREE.BackSide;
+          }
 
+          // Render into the main buffer
+          state.gl.setRenderTarget(fboMain);
+          state.gl.render(state.scene, state.camera);
 
-  // addTransmissionGui(gui, meshTransmissionMaterial, mtmParams);
+          parent.material = mtm;
+          parent.material.thickness = mtmParams.thickness;
+          parent.material.side = oldSide;
+          parent.material.buffer = fboMain.texture;
 
-  const fboBack = new THREE.WebGLRenderTarget(256, 256, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-    colorSpace: renderer.outputColorSpace,
-    type: THREE.HalfFloatType,
-  });
-  const fboMain = new THREE.WebGLRenderTarget(256, 256, {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-    colorSpace: renderer.outputColorSpace,
-    type: THREE.HalfFloatType,
-  });
-
-  const mtm = meshTransmissionMaterial;
-  mtm.buffer = fboMain.texture;
-  let oldBg;
-  let oldTone;
-  let oldSide;
-  const state = {
-    gl: renderer,
-    scene,
-    camera,
-  };
-  resize = () => {
-    let scale = [100/window.innerWidth, 100/window.innerHeight]
-    // if (modelAspect > aspectRatio) {
-    //   scale = [modelAspect / aspectRatio, 1]
-    // }
-    // else {
-    //   scale = [modelAspect / aspectRatio, 1]
-    // }
-
-    // global.pivotModel.matrixAutoUpdate = true
-    // global.pivotModel.updateMatrix()
-    global.pivotModel.scale.set(scale[0], scale[1])
-    console.log(scale, global.pivotModel.scale)
-
-    // gsap.to(global.pivotModel.scale, {
-    //   x: scale[0],
-    //   y: scale[1],
-    //   duration: 0.01,
-    // })
-    // global.pivotModel.scale.set(scale[0] + 2, scale[1] + 2, 1)
-    // global.pivotModel.updateMatrix()
+          // Set old state back
+          state.scene.background = oldBg;
+          state.gl.setRenderTarget(null);
+          parent.material = mtm;
+          state.gl.toneMapping = oldTone;
+        }
+      }
+    };
 
   }
-  // run on every frame
-  meshTransmissionMaterialUpdate = (elapsed, delta) => {
-    mtm.time = elapsed
-    for (const mesh of meshes) {
-      const parent = mesh;
-
-      if (mtm.buffer === fboMain.texture) {
-        // Save defaults
-        oldTone = state.gl.toneMapping;
-        oldBg = state.scene.background;
-        oldSide = parent.material.side;
-
-        // Switch off tonemapping lest it double tone maps
-        // Save the current background and set the HDR as the new BG
-        // Use discardMaterial, the parent will be invisible, but it's shadows will still be cast
-        state.gl.toneMapping = THREE.NoToneMapping;
-        if (mtmParams.customBackground)
-          state.scene.customBackground = mtmParams.background;
-        parent.material = discardMaterial;
-
-        if (mtmParams.backside) {
-          // Render into the backside buffer
-          state.gl.setRenderTarget(fboBack);
-          state.gl.render(state.scene, state.camera);
-          // And now prepare the material for the main render using the backside buffer
-          parent.material = mtm;
-          parent.material.buffer = fboBack.texture;
-          parent.material.thickness = mtmParams.backsideThickness;
-          parent.material.side = THREE.BackSide;
-        }
-
-        // Render into the main buffer
-        state.gl.setRenderTarget(fboMain);
-        state.gl.render(state.scene, state.camera);
-
-        parent.material = mtm;
-        parent.material.thickness = mtmParams.thickness;
-        parent.material.side = oldSide;
-        parent.material.buffer = fboMain.texture;
-
-        // Set old state back
-        state.scene.background = oldBg;
-        state.gl.setRenderTarget(null);
-        parent.material = mtm;
-        state.gl.toneMapping = oldTone;
-      }
-    }
-  };
-
-
+  global.pivotModel.add(model)
+  global.pivotModel.scale.set(0, 0, 0)
+  global.pivotModel.position.set(0, 0, 0)
+  // scene.add(global.pivotModel)
 }
 
 function addTransmissionGui(gui, mat, mtmParams) {
@@ -410,7 +435,14 @@ let app = {
 
 
     // this.container.style.touchAction = 'none'
-    document.body.addEventListener('pointermove', this.onPointerMove.bind(this))
+    // document.body.addEventListener('pointermove', this.onPointerMove.bind(this))
+    if (global.isMobile) {
+      document.body.addEventListener('touchmove', this.onPointerMove.bind(this))
+      document.body.addEventListener('touchstart', this.onPointerMove.bind(this))
+
+    }
+
+
 
     const sun = new THREE.DirectionalLight(0xFFFFFF, 0.6)
     sun.position.set(300, 400, 175)
@@ -800,11 +832,21 @@ void main()	{
   },
   setMouseCoords(x, y) {
     this.mouseCoords.set((x / renderer.domElement.clientWidth) * 2 - 1, (y / renderer.domElement.clientHeight) * 2 - 1)
+    // console.log(this.mouseCoords)
     this.mouseMoved = true
   },
   onPointerMove(event) {
-    if (event.isPrimary === false) return
-    this.setMouseCoords(event.clientX, event.clientY)
+    // if (event.isPrimary === false) return
+    console.log(event)
+    if (isMobile) {
+      for (const touches of event.touches) {
+        this.setMouseCoords(touches.clientX, touches.clientY)
+      }
+    }
+    else {
+      this.setMouseCoords(event.clientX, event.clientY)
+
+    }
   },
   // @param {number} interval - time elapsed between 2 frames
   // @param {number} elapsed - total time elapsed since app start
@@ -812,11 +854,11 @@ void main()	{
 
     // Set uniforms: mouse interaction
 
-    if (global.firstScreen) {
+    if (global.rotateModel && !global.isMobile) {
       gsap.to(global.pivotModel.rotation, {
-        z: -this.mouseCoords.x * (Math.PI / 6),
-        y: this.mouseCoords.x * (Math.PI / 6),
-        x: this.mouseCoords.y * (Math.PI / 8),
+        z: -this.mouseCoords.x * (Math.PI / global.animationRotation),
+        y: this.mouseCoords.x * (Math.PI / global.animationRotation),
+        x: this.mouseCoords.y * (Math.PI / (global.animationRotation + 2)),
         duration: 0,
         ease: "none"
       })
@@ -826,26 +868,70 @@ void main()	{
       // this.material.uniforms['map'].value = this.colorTexture
     }
     const hmUniforms = this.heightmapVariable.material.uniforms
-    if (this.mouseMoved) {
+    if (global.isMobile) {
+      if (this.mouseMoved) {
+        this.raycaster.setFromCamera(this.mouseCoords, camera)
 
-      this.raycaster.setFromCamera(this.mouseCoords, camera)
-
-      const intersects = this.raycaster.intersectObject(this.waterMesh)
-
-
+        const intersects = this.raycaster.intersectObject(this.waterMesh)
 
 
-      if (intersects.length > 0) {
-        const point = intersects[0].point
-        hmUniforms['mousePos'].value.set(point.x, point.y)
+
+
+        if (intersects.length > 0) {
+          const point = intersects[0].point
+          console.log(this.mouseCoords)
+          console.log(point)
+          hmUniforms['mousePos'].value.set(point.x, point.y)
+          const geometry = new THREE.SphereGeometry(1); // Example using a built-in geometry
+
+          // 2. Define the material (appearance of the points)
+          const material = new THREE.PointsMaterial({
+            color: 0xff0000, // Color of the points (red in this case)
+            size: 1,       // Size of the points in pixels
+            transparent: true,
+            opacity: 1
+          });
+
+          // 3. Create the Points object
+          const points = new THREE.Points(geometry, material);
+
+          // 4. Add the points object to your scene
+          points.position.set(point.x, point.y, -1)
+          scene.add(points);
+          console.log('hehe')
+        } else {
+          hmUniforms['mousePos'].value.set(10000, 10000)
+        }
+
+        this.mouseMoved = false
+      }
+      else {
+        hmUniforms['mousePos'].value.set(10000, 10000)
+      }
+    }
+    else {
+      if (this.mouseMoved) {
+
+        this.raycaster.setFromCamera(this.mouseCoords, camera)
+
+        const intersects = this.raycaster.intersectObject(this.waterMesh)
+
+
+
+
+        if (intersects.length > 0) {
+          const point = intersects[0].point
+          hmUniforms['mousePos'].value.set(point.x, point.y)
+        } else {
+          hmUniforms['mousePos'].value.set(10000, 10000)
+        }
+
+        this.mouseMoved = false
       } else {
         hmUniforms['mousePos'].value.set(10000, 10000)
       }
-
-      this.mouseMoved = false
-    } else {
-      hmUniforms['mousePos'].value.set(10000, 10000)
     }
+
 
     // Do the gpu computation
     this.gpuCompute.compute()
@@ -855,144 +941,99 @@ void main()	{
   }
 }
 
+if (window.innerWidth < 1090) {
+  global.animationPosition = (window.innerWidth / 1900) * 18
+}
+
+if (window.innerWidth < 850) {
+  global.modelScale = 1.3
+  global.animationRotation = 8
+}
+
+if (window.innerWidth < 730) {
+  global.animationRotation = 10
+}
+
+if (window.innerWidth < 620) {
+  global.stopPositionAnimation = true
+}
+
 
 let playAnimations = () => {
 
-  let t1 = gsap.timeline()
+  let t1 = gsap.timeline({ paused: false })
 
-  t1.to(global.pivotModel.position, {
+  t1.fromTo(global.pivotModel.scale, {
     x: 0,
     y: 0,
     z: 0,
-    duration: 1,
+    ease: "power2.out",
+  }, {
+    x: 1,
+    y: 1,
+    z: 1,
+    duration: 1.5,
     ease: "power2.out",
   })
-    .fromTo(global.pivotModel.scale, {
-      x: 0,
-      y: 0,
-      z: 0,
-      ease: "power2.out",
-    }, {
-      x: 1,
-      y: 1,
-      z: 1,
-      duration: 1.5,
-      ease: "power2.out",
-    })
     .to(global.pivotModel.scale,
       {
-        z: 1.05,
-        y: 1.05,
-        x: 1.05,
+        z: 1.1,
+        y: 1.1,
+        x: 1.1,
         duration: 1.5,
         yoyo: true,
         repeat: -1
       })
-    .to(global.pivotModel.position, {
-      scrollTrigger: {
-        trigger: ".section2",
-        start: "start bottom",
-        end: "center bottom",
-        invalidateOnRefresh: true,
-        scrub: 1,
-        // markers: true,
-      },
-      x: -20,
-      y: 2,
-      z: 0,
-      duration: 2,
-      ease: "power2.out",
-      onStart: () => {
-        console.log('started')
-        global.firstScreen = false
-        gsap.to(global.pivotModel.rotation, {
-          x: 0,
-          z: 0,
-          duration: 0.1,
-          ease: "power2.out"
-        })
-      },
-      onReverseComplete: () => {
-        global.firstScreen = true
-      }
-    })
-    .to(global.pivotModel.rotation, {
-      scrollTrigger: {
-        trigger: ".section2",
-        start: "start bottom",
-        end: "center bottom",
-        invalidateOnRefresh: true,
-        scrub: true,
-        // markers: true,
-      },
-      y: 2 * Math.PI,
-      duration: 2,
-      ease: "power2.out",
-    })
-    .fromTo(global.pivotModel.position,
-      {
-        x: -20,
-        y: 2,
-        z: 0,
-      },
-      {
-        scrollTrigger: {
-          trigger: ".section3",
-          invalidateOnRefresh: true,
-          scrub: 1,
-          // markers: true,
 
-          end: "center bottom",
-        },
-        x: 20,
-        y: 2,
-        z: 0,
-      },
-    )
-    .to(global.pivotModel.rotation, {
-      scrollTrigger: {
-        trigger: ".section3",
-        end: "center bottom",
-        invalidateOnRefresh: true,
-        scrub: true,
-        // markers: true,
-      },
-      y: -4 * Math.PI,
-      // duration: 2,
-      ease: "power2.out",
-    })
-    .fromTo(global.pivotModel.position,
-      {
-        x: 20,
-        y: 2,
-        z: 0,
-      },
-      {
-        scrollTrigger: {
-          trigger: ".section4",
-          scrub: 1,
-          invalidateOnRefresh: true,
-          // markers: true,
-          end: "center bottom",
-        },
-        onStart: () => {
-          global.firstScreen = true
-          console.log('huhu')
-        },
-        onReverseComplete: () => {
-          global.firstScreen = false
-          gsap.to(global.pivotModel.rotation, {
-            x: 0,
-            z: 0,
-            duration: 0.1,
-            ease: "power2.out"
-          })
-        },
+  let sec2anim = ScrollTrigger.create({
+    trigger: '.section2',
+    start: 'top bottom',
+    endTrigger: '.section2',
+    end: 'center bottom',
+    // markers: true,
+    onUpdate: (self) => {
+      global.pivotModel.position.set(self.progress.toFixed(4) * -global.animationPosition, self.progress.toFixed(4) * 2, 0)
+      global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI)
+    },
+    onEnter: () => {
+
+      gsap.to(global.pivotModel.rotation, {
         x: 0,
-        y: 2,
         z: 0,
-      },
-    )
+        duration: 0.1,
+        ease: "power2.out"
+      })
+    },
+    onLeaveBack: () => {
+      global.rotateModel = true
+    }
+  });
+  let sec3anim = ScrollTrigger.create({
+    trigger: '.section3',
+    start: 'top bottom',
+    endTrigger: '.section3',
+    end: 'center bottom',
+    // markers: true,
+    onUpdate: (self) => {
+      global.pivotModel.position.set(-global.animationPosition + (self.progress.toFixed(4) * (2 * global.animationPosition)), 2, 0)
+      global.pivotModel.rotation.y = self.progress.toFixed(4) * (-2 * Math.PI)
+    }
+  });
+  let sec4anim = ScrollTrigger.create({
+    trigger: '.section4',
+    start: 'top bottom',
+    endTrigger: '.section4',
+    end: 'center bottom',
+    // markers: true,
+    onLeave: () => {
+      global.rotateModel = true
+    },
+    onUpdate: (self) => {
+      global.pivotModel.position.set(global.animationPosition - (self.progress.toFixed(4) * global.animationPosition), 2, 0)
+      global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI)
+    }
+  });
+
   gsap.to(".card1",
     {
       scrollTrigger: {
@@ -1069,8 +1110,24 @@ let playAnimations = () => {
     perPage: 3,
     focus: 'center'
   }).mount();
-}
 
+  if (global.stopPositionAnimation) {
+    sec2anim.disable()
+    sec3anim.disable()
+    sec4anim.disable()
+    ScrollTrigger.create({
+      trigger: '.section2',
+      start: 'top bottom',
+      endTrigger: '.section2',
+      end: 'center bottom',
+      // markers: true,
+      onUpdate: (self) => {
+        global.pivotModel.position.set(0, self.progress.toFixed(4) * 2, 0)
+        global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI)
+      },
+    })
+  }
+}
 
 function onWindowResize() {
   const newWidth = window.innerWidth;
@@ -1085,6 +1142,7 @@ function onWindowResize() {
   // 2. Calculate the new aspect ratio
   const aspectRatio = newWidth / newHeight;
   let scale = [1, 1]
+  console.log(aspectRatio)
   if (imageAspect > aspectRatio) {
     scale = [imageAspect / aspectRatio, 1]
   }
@@ -1107,12 +1165,12 @@ function onWindowResize() {
     camera.top = window.innerHeight / 60, // top
     camera.bottom = window.innerHeight / -60, // bottom
 
-  // 4. Update the camera's projection matrix
-  camera.updateProjectionMatrix();
+    // 4. Update the camera's projection matrix
+    camera.updateProjectionMatrix();
   app.resize(scale)
   // resize() 
   console.log('rsize')
-  // ScrollTrigger.refresh();
+  ScrollTrigger.refresh();
 }
 
 window.addEventListener('resize', onWindowResize, false);
@@ -1141,7 +1199,7 @@ let main = async () => {
   await app.initScene()
   render()
   playAnimations()
-
+  onWindowResize()
 }
 
 
