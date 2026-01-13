@@ -48,30 +48,55 @@ html.lenis body {
     font-display: swap;
 }
 
-body {
-    margin: 0;
+html {
+    height: 100%;
+    /* Use 100% instead of 100vh for more consistent behavior */
+    overflow: hidden;
+    background-color: rgb(212, 212, 212);
+}
 
-    background-image: linear-gradient(45deg, #808080 25%, transparent 25%),
-        linear-gradient(-45deg, #808080 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #808080 75%),
-        linear-gradient(-45deg, transparent 75%, #808080 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+body {
+    -webkit-overflow-scrolling: touch;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
     font-family: 'DMSans', sans-serif;
 }
+
+.wrapper {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-y: scroll;
+}
+
+
 
 canvas {
     display: block;
     position: fixed;
     top: 0;
     left: 0;
+    height: 100dvh;
     height: 100vh;
     width: 100vw;
     z-index: 0;
     pointer-events: all;
 }
 
+body>img {
+    position: fixed;
+    bottom: 00px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 70vh;
+}
+
 .outerContainer {
+    overflow-y: auto;
+    min-height: 100vh;
     display: flex;
     z-index: 0;
     gap: 10vh;
@@ -565,29 +590,40 @@ h1>i {
         font-size: 22px;
     }
 
-    .client-container>img{
+    .client-container>img {
         width: 150px;
     }
 }
 
 @media screen and (max-width: 620px) {
-    .section2{
+    .section2 {
         padding-left: 0;
     }
-    .section3{
+
+    .section3 {
         padding: 0;
     }
-    .heading-container, .about-container{
+
+    .heading-container,
+    .about-container {
         margin-left: auto;
         margin-right: auto
     }
-    .about-container{
+
+    .about-container {
         width: 85%;
         text-align: center;
     }
 
-    .client-container>img{
+    .client-container>img {
         width: 100px;
     }
 
+}
+
+@media screen and (max-width: 485px) {
+    .client-container {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
 }

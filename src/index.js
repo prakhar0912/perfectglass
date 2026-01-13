@@ -20,7 +20,8 @@ import Splide from "@splidejs/splide";
 
 import Mountains from "../assets/glasshex.jpg"
 import transparent from "../public/transparent.hdr"
-import glassBottle from "../public/finalbottle1.glb"
+import glassBottle from "../public/withoutwater.glb"
+import bottlePng from "../public/bottle.png"
 
 
 const imageAspect = 1.7775510
@@ -31,19 +32,19 @@ stats.showPanel(0);
 document.body.appendChild(stats.dom)
 
 
-const lenis = new Lenis();
+// const lenis = new Lenis();
 
-// Synchronize Lenis scrolling with GSAP's ScrollTrigger plugin
-lenis.on('scroll', ScrollTrigger.update);
+// // Synchronize Lenis scrolling with GSAP's ScrollTrigger plugin
+// lenis.on('scroll', ScrollTrigger.update);
 
-// Add Lenis's requestAnimationFrame (raf) method to GSAP's ticker
-// This ensures Lenis's smooth scroll animation updates on each GSAP tick
-gsap.ticker.add((time) => {
-  lenis.raf(time * 1000); // Convert time from seconds to milliseconds
-});
+// // Add Lenis's requestAnimationFrame (raf) method to GSAP's ticker
+// // This ensures Lenis's smooth scroll animation updates on each GSAP tick
+// gsap.ticker.add((time) => {
+//   lenis.raf(time * 1000); // Convert time from seconds to milliseconds
+// });
 
-// Disable lag smoothing in GSAP to prevent any delay in scroll animations
-gsap.ticker.lagSmoothing(0);
+// // Disable lag smoothing in GSAP to prevent any delay in scroll animations
+// gsap.ticker.lagSmoothing(0);
 
 
 
@@ -116,65 +117,57 @@ global.animationRotation = 6
 global.modelScale = 1.4
 global.stopPositionAnimation = false
 global.isMobile = true
+global.aspectRatio = window.innerWidth / window.innerHeight
+global.scale = [1, 1]
 addDirLights(0, 10, 0, global.pivotModel, 2)
 addDirLights(-20, 10, 0, global.pivotModel, 2)
 addDirLights(20, 10, 0, global.pivotModel, 2)
 
+// if(global.isMobile){
+//   global.modelScale = 10
+// }
 
 
 
 async function setupMeshTransmissionMaterial() {
-  const mtmParams = {
-    customBackground: scene.background,
-    backside: false,
-    thickness: 2,
-    backsideThickness: 0.5,
-  };
-
-  const gltf = await gltfLoader.loadAsync(glassBottle);
-  const model = gltf.scene;
-  global.mixer = new THREE.AnimationMixer(model);
-  const clips = gltf.animations;
-  if (clips.length > 0) {
-    const action = global.mixer.clipAction(clips[0]);
-    action.play();
-  }
-
-
-  model.scale.set(global.modelScale, global.modelScale, global.modelScale)
-  model.position.set(0, -12, 0)
-
-
-  // const axis = new THREE.Vector3(-1, 0, 0); // Y-axis
-  // const angle = Math.PI / 4; // 90 degrees in radians
-  // const quaternion = new THREE.Quaternion();
-  // quaternion.setFromAxisAngle(axis.normalize(), angle);
-
-  // model.quaternion.copy(quaternion)
-
-
-  // addDirLights(20, 15, 5, model, 2)
-  // addDirLights(0, 10, 0, model, 2)
-  // addDirLights(0, 10, 10, model, 5)
-
+  let model;
   if (global.isMobile) {
-    model.traverse((child) => {
-      if (child.isMesh) {
-        const glassMat = new THREE.MeshPhysicalMaterial({
-          metalness: 0,
-          roughness: 1,
-          envMapIntensity: 0.9,
-          clearcoat: 1,
-          transparent: true,
-          transmission: .95,
-          opacity: 1,
-          reflectivity: 0.2,
-        })
-        child.material = glassMat
-      }
-    })
+    let bottleTex = await loadTexture(bottlePng)
+    bottleTex.colorSpace = THREE.SRGBColorSpace
+    const material = new THREE.MeshStandardMaterial({
+      map: bottleTex,
+      transparent: true, // Crucial for PNG transparency
+      side: THREE.DoubleSide // Optional: makes both sides visible
+    });
+
+    // Create the geometry (width, height)
+    const geometry = new THREE.PlaneGeometry(20, 20);
+
+    // Create the mesh and add to scene
+    model = new THREE.Mesh(geometry, material);
+    // model.scale.set(2, 2, 2)
+    model.position.set(0, -3, 0)
   }
   else {
+    const mtmParams = {
+      customBackground: scene.background,
+      backside: false,
+      thickness: 2,
+      backsideThickness: 0.5,
+    };
+
+    const gltf = await gltfLoader.loadAsync(glassBottle);
+    model = gltf.scene;
+    global.mixer = new THREE.AnimationMixer(model);
+    const clips = gltf.animations;
+    if (clips.length > 0) {
+      const action = global.mixer.clipAction(clips[0]);
+      action.play();
+    }
+
+
+    model.scale.set(global.modelScale, global.modelScale, global.modelScale)
+    model.position.set(0, -12, 0)
     const discardMaterial = new MeshDiscardMaterial();
 
     const meshTransmissionMaterial = new MeshTransmissionMaterial({
@@ -247,29 +240,6 @@ async function setupMeshTransmissionMaterial() {
       scene,
       camera,
     };
-    resize = () => {
-      let scale = [100 / window.innerWidth, 100 / window.innerHeight]
-      // if (modelAspect > aspectRatio) {
-      //   scale = [modelAspect / aspectRatio, 1]
-      // }
-      // else {
-      //   scale = [modelAspect / aspectRatio, 1]
-      // }
-
-      // global.pivotModel.matrixAutoUpdate = true
-      // global.pivotModel.updateMatrix()
-      global.pivotModel.scale.set(scale[0], scale[1])
-      console.log(scale, global.pivotModel.scale)
-
-      // gsap.to(global.pivotModel.scale, {
-      //   x: scale[0],
-      //   y: scale[1],
-      //   duration: 0.01,
-      // })
-      // global.pivotModel.scale.set(scale[0] + 2, scale[1] + 2, 1)
-      // global.pivotModel.updateMatrix()
-
-    }
     // run on every frame
     meshTransmissionMaterialUpdate = (elapsed, delta) => {
       if (global.wireframe == true) {
@@ -326,7 +296,7 @@ async function setupMeshTransmissionMaterial() {
   global.pivotModel.add(model)
   global.pivotModel.scale.set(0, 0, 0)
   global.pivotModel.position.set(0, 0, 0)
-  // scene.add(global.pivotModel)
+  scene.add(global.pivotModel)
 }
 
 function addTransmissionGui(gui, mat, mtmParams) {
@@ -393,6 +363,10 @@ const params = {
   waveHeight: 0.04
 }
 
+if (global.isMobile) {
+  params.mouseSize = 0.3
+}
+
 // Texture width for simulation
 const FBO_WIDTH = 512
 const FBO_HEIGHT = 256
@@ -402,6 +376,110 @@ let GEOM_HEIGHT = window.innerHeight / 30
 
 const simplex = new SimplexNoise()
 let app = {
+
+  async initgpu() {
+    if (this.gpuCompute) {
+      this.gpuCompute.dispose(); // Frees GPU-related resources
+    }
+    this.gpuCompute = new GPUComputationRenderer(FBO_WIDTH, FBO_HEIGHT, renderer)
+
+    if (renderer.capabilities.isWebGL2 === false) {
+      this.gpuCompute.setDataType(THREE.HalfFloatType)
+    }
+
+    const heightmap0 = this.gpuCompute.createTexture()
+
+    this.fillTexture(heightmap0)
+
+    const heightMapShader = `
+            #define PI 3.1415926538
+
+uniform vec2 mousePos;
+uniform float mouseSize;
+uniform float viscosityConstant;
+uniform float waveheightMultiplier;
+
+void main()	{
+    // The size of the computation (sizeX * sizeY) is defined as 'resolution' automatically in the shader.
+    // sizeX and sizeY are passed as params when you make a new GPUComputationRenderer instance.
+    vec2 cellSize = 1.0 / resolution.xy;
+
+    // gl_FragCoord is in pixels (coordinates range from 0.0 to the width/height of the window,
+    // note that the window isn't the visible one on your browser here, since the gpgpu renders to its virtual screen
+    // thus the uv still is 0..1
+    vec2 uv = gl_FragCoord.xy * cellSize;
+
+    // heightmapValue.x == height from previous frame
+    // heightmapValue.y == height from penultimate frame
+    // heightmapValue.z, heightmapValue.w not used
+    vec4 heightmapValue = texture2D( heightmap, uv );
+
+    // Get neighbours
+    vec4 north = texture2D( heightmap, uv + vec2( 0.0, cellSize.y ) );
+    vec4 south = texture2D( heightmap, uv + vec2( 0.0, - cellSize.y ) );
+    vec4 east = texture2D( heightmap, uv + vec2( cellSize.x, 0.0 ) );
+    vec4 west = texture2D( heightmap, uv + vec2( - cellSize.x, 0.0 ) );
+
+    // https://web.archive.org/web/20080618181901/http://freespace.virgin.net/hugo.elias/graphics/x_water.htm
+    // change in height is proportional to the height of the wave 2 frames older
+    // so new height is equaled to the smoothed height plus the change in height
+    float newHeight = ( ( north.x + south.x + east.x + west.x ) * 0.5 - heightmapValue.y ) * viscosityConstant;
+
+    // Mouse influence
+    float mousePhase = clamp( length( ( uv - vec2( 0.5 ) ) * vec2(GEOM_WIDTH, GEOM_HEIGHT) - vec2( mousePos.x, - mousePos.y ) ) * PI / mouseSize, 0.0, PI );
+    newHeight += ( cos( mousePhase ) + 1.0 ) * waveheightMultiplier;
+
+    heightmapValue.y = heightmapValue.x;
+    heightmapValue.x = newHeight;
+
+    gl_FragColor = heightmapValue;
+
+}
+        `
+
+    this.heightmapVariable = this.gpuCompute.addVariable('heightmap', heightMapShader, heightmap0)
+
+    this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable])
+
+    this.heightmapVariable.material.uniforms['mousePos'] = { value: new THREE.Vector2(10000, 10000) }
+    this.heightmapVariable.material.uniforms['mouseSize'] = { value: params.mouseSize }
+    this.heightmapVariable.material.uniforms['viscosityConstant'] = { value: params.viscosity }
+    this.heightmapVariable.material.uniforms['waveheightMultiplier'] = { value: params.waveHeight }
+    this.heightmapVariable.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
+    this.heightmapVariable.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
+
+    const error = this.gpuCompute.init()
+    if (error !== null) {
+      console.error(error)
+    }
+
+    // Create compute shader to smooth the water surface and velocity
+    const smoothSh = `
+            uniform sampler2D smoothTexture;
+
+void main()	{
+
+    vec2 cellSize = 1.0 / resolution.xy;
+
+    vec2 uv = gl_FragCoord.xy * cellSize;
+
+    // Computes the mean of texel and 4 neighbours
+    vec4 textureValue = texture2D( smoothTexture, uv );
+    textureValue += texture2D( smoothTexture, uv + vec2( 0.0, cellSize.y ) );
+    textureValue += texture2D( smoothTexture, uv + vec2( 0.0, - cellSize.y ) );
+    textureValue += texture2D( smoothTexture, uv + vec2( cellSize.x, 0.0 ) );
+    textureValue += texture2D( smoothTexture, uv + vec2( - cellSize.x, 0.0 ) );
+
+    textureValue /= 5.0;
+
+    gl_FragColor = textureValue;
+
+}
+        `
+
+    this.smoothShader = this.gpuCompute.createShaderMaterial(smoothSh, { smoothTexture: { value: null } })
+  },
+
   async initScene() {
 
     const color = new THREE.Color(0x000000);
@@ -439,7 +517,6 @@ let app = {
     if (global.isMobile) {
       document.body.addEventListener('touchmove', this.onPointerMove.bind(this))
       document.body.addEventListener('touchstart', this.onPointerMove.bind(this))
-
     }
 
 
@@ -672,7 +749,6 @@ void main() {
     this.waterMesh.scale.set(scale[0], scale[1], 1)
     this.waterMesh.matrixAutoUpdate = false
     this.waterMesh.position.set(0, 0, -5)
-    // this.waterMesh.scale.set(2,2,1)
 
     this.waterMesh.updateMatrix()
 
@@ -680,110 +756,25 @@ void main() {
     // addDirLights(0,0,-1, this.waterMesh, 2)
 
     // Creates the gpu computation class and sets it up
-    this.gpuCompute = new GPUComputationRenderer(FBO_WIDTH, FBO_HEIGHT, renderer)
-
-    if (renderer.capabilities.isWebGL2 === false) {
-      this.gpuCompute.setDataType(THREE.HalfFloatType)
-    }
-
-    const heightmap0 = this.gpuCompute.createTexture()
-
-    this.fillTexture(heightmap0)
-
-    const heightMapShader = `
-            #define PI 3.1415926538
-
-uniform vec2 mousePos;
-uniform float mouseSize;
-uniform float viscosityConstant;
-uniform float waveheightMultiplier;
-
-void main()	{
-    // The size of the computation (sizeX * sizeY) is defined as 'resolution' automatically in the shader.
-    // sizeX and sizeY are passed as params when you make a new GPUComputationRenderer instance.
-    vec2 cellSize = 1.0 / resolution.xy;
-
-    // gl_FragCoord is in pixels (coordinates range from 0.0 to the width/height of the window,
-    // note that the window isn't the visible one on your browser here, since the gpgpu renders to its virtual screen
-    // thus the uv still is 0..1
-    vec2 uv = gl_FragCoord.xy * cellSize;
-
-    // heightmapValue.x == height from previous frame
-    // heightmapValue.y == height from penultimate frame
-    // heightmapValue.z, heightmapValue.w not used
-    vec4 heightmapValue = texture2D( heightmap, uv );
-
-    // Get neighbours
-    vec4 north = texture2D( heightmap, uv + vec2( 0.0, cellSize.y ) );
-    vec4 south = texture2D( heightmap, uv + vec2( 0.0, - cellSize.y ) );
-    vec4 east = texture2D( heightmap, uv + vec2( cellSize.x, 0.0 ) );
-    vec4 west = texture2D( heightmap, uv + vec2( - cellSize.x, 0.0 ) );
-
-    // https://web.archive.org/web/20080618181901/http://freespace.virgin.net/hugo.elias/graphics/x_water.htm
-    // change in height is proportional to the height of the wave 2 frames older
-    // so new height is equaled to the smoothed height plus the change in height
-    float newHeight = ( ( north.x + south.x + east.x + west.x ) * 0.5 - heightmapValue.y ) * viscosityConstant;
-
-    // Mouse influence
-    float mousePhase = clamp( length( ( uv - vec2( 0.5 ) ) * vec2(GEOM_WIDTH, GEOM_HEIGHT) - vec2( mousePos.x, - mousePos.y ) ) * PI / mouseSize, 0.0, PI );
-    newHeight += ( cos( mousePhase ) + 1.0 ) * waveheightMultiplier;
-
-    heightmapValue.y = heightmapValue.x;
-    heightmapValue.x = newHeight;
-
-    gl_FragColor = heightmapValue;
-
-}
-        `
-
-    this.heightmapVariable = this.gpuCompute.addVariable('heightmap', heightMapShader, heightmap0)
-
-    this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable])
-
-    this.heightmapVariable.material.uniforms['mousePos'] = { value: new THREE.Vector2(10000, 10000) }
-    this.heightmapVariable.material.uniforms['mouseSize'] = { value: params.mouseSize }
-    this.heightmapVariable.material.uniforms['viscosityConstant'] = { value: params.viscosity }
-    this.heightmapVariable.material.uniforms['waveheightMultiplier'] = { value: params.waveHeight }
-    this.heightmapVariable.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
-    this.heightmapVariable.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
-
-    const error = this.gpuCompute.init()
-    if (error !== null) {
-      console.error(error)
-    }
-
-    // Create compute shader to smooth the water surface and velocity
-    const smoothSh = `
-            uniform sampler2D smoothTexture;
-
-void main()	{
-
-    vec2 cellSize = 1.0 / resolution.xy;
-
-    vec2 uv = gl_FragCoord.xy * cellSize;
-
-    // Computes the mean of texel and 4 neighbours
-    vec4 textureValue = texture2D( smoothTexture, uv );
-    textureValue += texture2D( smoothTexture, uv + vec2( 0.0, cellSize.y ) );
-    textureValue += texture2D( smoothTexture, uv + vec2( 0.0, - cellSize.y ) );
-    textureValue += texture2D( smoothTexture, uv + vec2( cellSize.x, 0.0 ) );
-    textureValue += texture2D( smoothTexture, uv + vec2( - cellSize.x, 0.0 ) );
-
-    textureValue /= 5.0;
-
-    gl_FragColor = textureValue;
-
-}
-        `
-
-    this.smoothShader = this.gpuCompute.createShaderMaterial(smoothSh, { smoothTexture: { value: null } })
+    this.initgpu()
 
   },
   resize(scale) {
     this.waterMesh.geometry.dispose()
+    GEOM_WIDTH = window.innerWidth / 30
+    GEOM_HEIGHT = window.innerHeight / 30
+    this.waterMesh.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
+    this.waterMesh.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
     this.waterMesh.geometry = new THREE.PlaneGeometry(window.innerWidth / 30, window.innerHeight / 30, FBO_WIDTH, FBO_HEIGHT)
+    this.heightmapVariable.material.defines.GEOM_WIDTH = GEOM_WIDTH.toFixed(1)
+    this.heightmapVariable.material.defines.GEOM_HEIGHT = GEOM_HEIGHT.toFixed(1)
+
     this.waterMesh.scale.set(scale[0], scale[1], 1)
+    this.waterMesh.matrixAutoUpdate = true
+    this.waterMesh.material.needsUpdate = true
+    // console.log(this.waterMesh)
     this.waterMesh.updateMatrix()
+    this.initgpu()
   },
   fillTexture(texture) {
     const waterMaxHeight = 0.009;
@@ -832,12 +823,10 @@ void main()	{
   },
   setMouseCoords(x, y) {
     this.mouseCoords.set((x / renderer.domElement.clientWidth) * 2 - 1, (y / renderer.domElement.clientHeight) * 2 - 1)
-    // console.log(this.mouseCoords)
     this.mouseMoved = true
   },
   onPointerMove(event) {
     // if (event.isPrimary === false) return
-    console.log(event)
     if (isMobile) {
       for (const touches of event.touches) {
         this.setMouseCoords(touches.clientX, touches.clientY)
@@ -854,12 +843,12 @@ void main()	{
 
     // Set uniforms: mouse interaction
 
-    if (global.rotateModel && !global.isMobile) {
+    if (global.rotateModel) {
       gsap.to(global.pivotModel.rotation, {
         z: -this.mouseCoords.x * (Math.PI / global.animationRotation),
         y: this.mouseCoords.x * (Math.PI / global.animationRotation),
         x: this.mouseCoords.y * (Math.PI / (global.animationRotation + 2)),
-        duration: 0,
+        duration: global.isMobile ? 1 : 0,
         ease: "none"
       })
     }
@@ -868,68 +857,26 @@ void main()	{
       // this.material.uniforms['map'].value = this.colorTexture
     }
     const hmUniforms = this.heightmapVariable.material.uniforms
-    if (global.isMobile) {
-      if (this.mouseMoved) {
-        this.raycaster.setFromCamera(this.mouseCoords, camera)
+    if (this.mouseMoved) {
 
-        const intersects = this.raycaster.intersectObject(this.waterMesh)
+      this.raycaster.setFromCamera(this.mouseCoords, camera)
 
+      const intersects = this.raycaster.intersectObject(this.waterMesh)
 
-
-
-        if (intersects.length > 0) {
-          const point = intersects[0].point
-          console.log(this.mouseCoords)
-          console.log(point)
-          hmUniforms['mousePos'].value.set(point.x, point.y)
-          const geometry = new THREE.SphereGeometry(1); // Example using a built-in geometry
-
-          // 2. Define the material (appearance of the points)
-          const material = new THREE.PointsMaterial({
-            color: 0xff0000, // Color of the points (red in this case)
-            size: 1,       // Size of the points in pixels
-            transparent: true,
-            opacity: 1
-          });
-
-          // 3. Create the Points object
-          const points = new THREE.Points(geometry, material);
-
-          // 4. Add the points object to your scene
-          points.position.set(point.x, point.y, -1)
-          scene.add(points);
-          console.log('hehe')
-        } else {
-          hmUniforms['mousePos'].value.set(10000, 10000)
+      if (intersects.length > 0) {
+        const point = intersects[0].point
+        console.log(global.scale)
+        if (global.isMobile) {
+          point.x = point.x * 1 / scale[0]
         }
-
-        this.mouseMoved = false
-      }
-      else {
-        hmUniforms['mousePos'].value.set(10000, 10000)
-      }
-    }
-    else {
-      if (this.mouseMoved) {
-
-        this.raycaster.setFromCamera(this.mouseCoords, camera)
-
-        const intersects = this.raycaster.intersectObject(this.waterMesh)
-
-
-
-
-        if (intersects.length > 0) {
-          const point = intersects[0].point
-          hmUniforms['mousePos'].value.set(point.x, point.y)
-        } else {
-          hmUniforms['mousePos'].value.set(10000, 10000)
-        }
-
-        this.mouseMoved = false
+        hmUniforms['mousePos'].value.set(point.x, point.y)
       } else {
         hmUniforms['mousePos'].value.set(10000, 10000)
       }
+
+      this.mouseMoved = false
+    } else {
+      hmUniforms['mousePos'].value.set(10000, 10000)
     }
 
 
@@ -986,6 +933,7 @@ let playAnimations = () => {
       })
 
   let sec2anim = ScrollTrigger.create({
+    scroller: document.body,
     trigger: '.section2',
     start: 'top bottom',
     endTrigger: '.section2',
@@ -1009,6 +957,7 @@ let playAnimations = () => {
     }
   });
   let sec3anim = ScrollTrigger.create({
+    scroller: document.body,
     trigger: '.section3',
     start: 'top bottom',
     endTrigger: '.section3',
@@ -1020,6 +969,7 @@ let playAnimations = () => {
     }
   });
   let sec4anim = ScrollTrigger.create({
+    scroller: document.body,
     trigger: '.section4',
     start: 'top bottom',
     endTrigger: '.section4',
@@ -1037,6 +987,7 @@ let playAnimations = () => {
   gsap.to(".card1",
     {
       scrollTrigger: {
+        scroller: document.body,
         trigger: ".card1container",
         scrub: 1,
         invalidateOnRefresh: true,
@@ -1058,6 +1009,7 @@ let playAnimations = () => {
   gsap.to(".card2",
     {
       scrollTrigger: {
+        scroller: document.body,
         trigger: ".card2container",
         scrub: 1,
         invalidateOnRefresh: true,
@@ -1080,6 +1032,7 @@ let playAnimations = () => {
   gsap.to(".card3",
     {
       scrollTrigger: {
+        scroller: document.body,
         trigger: ".card3container",
         scrub: 1,
         invalidateOnRefresh: true,
@@ -1116,6 +1069,7 @@ let playAnimations = () => {
     sec3anim.disable()
     sec4anim.disable()
     ScrollTrigger.create({
+      scroller: document.body,
       trigger: '.section2',
       start: 'top bottom',
       endTrigger: '.section2',
@@ -1133,43 +1087,30 @@ function onWindowResize() {
   const newWidth = window.innerWidth;
   const newHeight = window.innerHeight;
 
-  // 1. Update the renderer size
   renderer.setSize(newWidth, newHeight);
 
-  // Optional: Adjust the pixel ratio for clarity
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  // 2. Calculate the new aspect ratio
   const aspectRatio = newWidth / newHeight;
-  let scale = [1, 1]
+  global.aspectRatio = aspectRatio
+  global.scale = [1, 1]
   console.log(aspectRatio)
   if (imageAspect > aspectRatio) {
-    scale = [imageAspect / aspectRatio, 1]
+    global.scale = [imageAspect / aspectRatio, 1]
   }
   else {
-    scale = [1, aspectRatio / imageAspect]
+    global.aspectRatio = imageAspect
+
+    global.scale = [1, aspectRatio / imageAspect]
   }
-
-  // 3. Update the camera's frustum boundaries
-  // You need a reference value for the view size (e.g., a fixed height or a "camFactor")
-  // In this example, 'viewSize' is a constant that defines the vertical extents.
-  const viewSize = 30; // Example value, adjust as needed
-
-  // camera.left = -aspectRatio * viewSize / 2;
-  // camera.right = aspectRatio * viewSize / 2;
-  // camera.top = viewSize / 2;
-  // camera.bottom = -viewSize / 2;
 
   camera.left = window.innerWidth / -60, // left
     camera.right = window.innerWidth / 60, // right
     camera.top = window.innerHeight / 60, // top
     camera.bottom = window.innerHeight / -60, // bottom
 
-    // 4. Update the camera's projection matrix
     camera.updateProjectionMatrix();
-  app.resize(scale)
-  // resize() 
-  console.log('rsize')
+  app.resize(global.scale)
   ScrollTrigger.refresh();
 }
 
@@ -1192,6 +1133,38 @@ function render() {
   stats.end()
 }
 
+let addbottleGif = () => {
+  const loader = new THREE.TextureLoader();
+
+  // Use a public PNG URL or replace with your local asset path
+  loader.load(bottlePng,
+    function (texture) {
+      // Adjust color space for better appearance in modern Three.js
+      texture.colorSpace = THREE.SRGBColorSpace;
+
+      // Create the material
+      const material = new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true, // Crucial for PNG transparency
+        side: THREE.DoubleSide // Optional: makes both sides visible
+      });
+
+      // Create the geometry (width, height)
+      const geometry = new THREE.PlaneGeometry(4, 4);
+
+      // Create the mesh and add to scene
+      const plane = new THREE.Mesh(geometry, material);
+      plane.scale.set(6, 6, 6)
+      plane.position.set(0, -3, 0)
+      scene.add(plane)
+    },
+    undefined, // onProgress callback (optional)
+    function (error) { // onError callback
+      console.error('An error occurred loading the texture:', error);
+    }
+  );
+}
+
 let main = async () => {
 
   await setupEnv();
@@ -1199,7 +1172,8 @@ let main = async () => {
   await app.initScene()
   render()
   playAnimations()
-  onWindowResize()
+  window.scrollTo(0, 1)
+  // onWindowResize()
 }
 
 
