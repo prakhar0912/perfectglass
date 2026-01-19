@@ -106,7 +106,7 @@ body>img {
     margin: 0;
 }
 
-nav .no-mobile {
+.no-mobile {
     position: fixed;
     /* display: grid;
     justify-items: center;
@@ -114,9 +114,11 @@ nav .no-mobile {
     top: 0;
     left: 0;
     width: 100%;
-    height: 12vh;
+    height: 13vh;
     margin: auto;
-    z-index: 1;
+    z-index: 2;
+    /* overflow: hidden; */
+    
 }
 
 .nav-container {
@@ -129,7 +131,29 @@ nav .no-mobile {
     gap: 30px;
     font-size: 18px;
     font-weight: 500;
-    color: var(--grey)
+    color: var(--grey);
+    margin: 0 auto;
+    z-index: 2;
+    margin-top: 5px;
+}
+
+.nav-bg{
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.246);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 0 4px 2px rgba(255, 255, 255, 0.2);
+    margin-top: 5px;
+    padding: 5px 7vw;
+}
+
+.nav-container > img{
+    transform: translateY(-3px);
 }
 
 .nav-container>p {
@@ -418,7 +442,7 @@ h1>i {
     transform: translateX(49px) rotate(90deg);
     transform-origin: left; */
     padding: 6px 0;
-    bottom: 0;
+    bottom: 10px;
     left: 0;
     width: 100%;
     overflow: hidden;
@@ -631,9 +655,10 @@ h1>i {
         inset 0 -1px 0 rgba(255, 255, 255, 0.1),
         inset 0 0 4px 2px rgba(255, 255, 255, 0.2);
 
-    transition: opacity 0.5s ease-in;
+    /* transition: opacity 0.5s ease-in; */
+    /* transform: translateY(50%); */
     opacity: 0;
-    will-change: background-position;
+    will-change: transform;
 }
 
 .cards-container>div>img {
@@ -642,8 +667,8 @@ h1>i {
 
 .cards-container>div>h3 {
     font-size: 36px;
-    color: transparent;
-
+    color: #656565;
+    font-style: italic;
 }
 
 .cards-container>div>p {
@@ -657,11 +682,11 @@ h1>i {
 }
 
 .card-text-background {
-    opacity: 1 !important;
+    /* opacity: 1 !important; */
     background: radial-gradient(circle, var(--muted-cyan), var(--purple));
     background-clip: text;
     color: transparent !important;
-    /* animation: bg-text 3s linear infinite; */
+    animation: bg-text 3s linear infinite;
     background-size: 200% 200%;
 }
 
@@ -809,13 +834,23 @@ h1>i {
     }
 }
 
+@media screen and (max-width: 1180px){
+    .nav-container{
+        gap: 2vw;
+    }
+
+    .logo{
+        margin: 0 15px;
+    }
+}
+
 @media screen and (max-width: 1090px) {
     .nav-container {
         gap: 15px;
     }
 
     .logo {
-        width: 250px;
+        width: 280px;
         margin: 0 15px;
     }
 
@@ -866,7 +901,7 @@ h1>i {
     }
 
     .cards-container {
-        margin: 0 40px;
+        margin: 0 50px;
     }
 
     .cards-container>div {
@@ -883,6 +918,21 @@ h1>i {
 
     .cards-container>div>p {
         font-size: 16px;
+    }
+}
+
+@media screen and (max-width: 900px){
+    .nav-container{
+        gap: 2vw;
+        padding: 5px 5vw;
+    }
+
+    .nav-container > p{
+        font-size: 14px;
+    }
+
+    .logo{
+        margin: 0 10px;
     }
 }
 
@@ -965,6 +1015,9 @@ h1>i {
         width: 60px;
     }
 
+    .cards-container > div{
+        width: 55vw;
+    }
 
     .cards-container>div>h3 {
         font-size: 24px;
@@ -995,6 +1048,8 @@ h1>i {
         width: 55vw;
     }
 
+
+
 }
 
 @media screen and (max-width: 550px) {
@@ -1013,6 +1068,10 @@ h1>i {
 
     .menu-toggle-label {
         display: none;
+    }
+
+    .cards-container > div{
+        width: 60vw;
     }
 }
 
@@ -1035,6 +1094,18 @@ h1>i {
         grid-template-rows: auto auto auto;
         grid-template-columns: auto auto;
     }
+
+    .section4{
+        overflow-x: hidden;
+    }
+
+    .ticker3{
+        transform: translateX(-0px) rotate(90deg);
+    }
+
+    .ticker4{
+        transform: translateX(-0px) rotate(-90deg);
+    }
 }
 
 @media screen and (max-width: 444px) {
@@ -1054,10 +1125,26 @@ h1>i {
     .section1>h1 {
         font-size: 48px;
     }
+
+    .cards-container > div{
+        width: 70vw;
+    }
+
+    /* .ticker3 .ticker-text, .ticker4 .ticker-text{
+        font-size: 36px;
+    } */
+
+
 }
 
 @media screen and (max-width: 423px) {
     .section1>h1 {
         font-size: 44px;
     }
+
+    .cards-container > div{
+        width: 75vw;
+        justify-self: center;
+    }
+
 }

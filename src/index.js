@@ -947,11 +947,36 @@ let sec2anim;
 let sec3anim;
 let sec4anim;
 let mobileanim;
-let card1anim;
-let card2anim;
-let card3anim;
 
 let playAnimations = () => {
+
+
+  const showAnim = gsap.from('.nav-container', {
+    yPercent: -100,
+    paused: true,
+    duration: 0.2
+  }).progress(1);
+
+  ScrollTrigger.create({
+    scroller: outerContainer,
+    start: "50px top",
+    end: "max",
+    // markers: true,
+    onEnter: () => {
+      console.log('huh')
+      document.querySelector('.nav-container').classList.add('nav-bg')
+    },
+    onLeaveBack: () => {
+      console.log('huh')
+      document.querySelector('.nav-container').classList.remove('nav-bg')
+    },
+    onUpdate: (self) => {
+      self.direction === -1 ? showAnim.play() : showAnim.reverse()
+    },
+  });
+
+
+
   let t1 = gsap.timeline({ paused: false })
 
   t1.fromTo(global.pivotModel.scale, {
@@ -971,9 +996,10 @@ let playAnimations = () => {
         z: 1.1,
         y: 1.1,
         x: 1.1,
-        duration: 1.5,
+        duration: 1,
         yoyo: true,
-        repeat: -1
+        repeat: -1,
+        // ease: "power2.in"
       })
 
   document.querySelectorAll('.ticker').forEach(ticker => {
@@ -1043,7 +1069,7 @@ let playAnimations = () => {
     trigger: '.section4',
     start: 'top bottom',
     endTrigger: '.section4',
-    end: 'center bottom',
+    end: '200px bottom',
     // markers: true,
     onLeave: () => {
       global.rotateModel = true
@@ -1054,6 +1080,26 @@ let playAnimations = () => {
     }
   });
 
+  // gsap.to(global.pivotModel.scale, {
+  //   scrollTrigger: {
+  //     scroller: outerContainer,
+  //     trigger: '.section4',
+  //     start: 'top bottom',
+  //     endTrigger: '.section4',
+  //     end: 'bottom bottom',
+  //     markers: true,
+  //     scrub: true,
+  //   },
+  //   keyframes: [
+  //     { x: 1.2, y: 1.2, z: 1.2 },
+  //     { x: 1.1, y: 1.1, z: 1.1 },
+  //     { x: 1.2, y: 1.2, z: 1.2 },
+  //     { x: 1.1, y: 1.1, z: 1.1 },
+
+  //   ]
+  // })
+
+
   gsap.to(".card1container", {
     scrollTrigger: {
       scroller: outerContainer,
@@ -1061,21 +1107,12 @@ let playAnimations = () => {
       scrub: 1,
       // markers: true,
       start: "-100px center",
-      // end: "",
-      onEnter: (item) => {
-        item.trigger.classList.add('card-text-background')
-      },
-      onLeave: (item) => {
-        item.trigger.classList.remove('card-text-background')
-      },
-      onEnterBack: (item) => {
-        item.trigger.classList.add('card-text-background')
-      },
-      onLeaveBack: (item) => {
-        item.trigger.classList.remove('card-text-background')
-      },
     },
-    backgroundPosition: "200% 0%",
+    keyframes: [
+      { yPercent: 0, opacity: 1 },
+      { yPercent: 0, opacity: 1 },
+      { yPercent: 0, opacity: 0 }
+    ]
   })
 
   gsap.to(".card2container", {
@@ -1085,21 +1122,12 @@ let playAnimations = () => {
       scrub: 1,
       // markers: true,
       start: "-100px center",
-      // end: "",
-      onEnter: (item) => {
-        item.trigger.classList.add('card-text-background')
-      },
-      onLeave: (item) => {
-        item.trigger.classList.remove('card-text-background')
-      },
-      onEnterBack: (item) => {
-        item.trigger.classList.add('card-text-background')
-      },
-      onLeaveBack: (item) => {
-        item.trigger.classList.remove('card-text-background')
-      },
     },
-    backgroundPosition: "200% 0%",
+    keyframes: [
+      { yPercent: 0, opacity: 1 },
+      { yPercent: 0, opacity: 1 },
+      { yPercent: 0, opacity: 0 }
+    ]
   })
 
   gsap.to(".card3container", {
@@ -1109,44 +1137,14 @@ let playAnimations = () => {
       scrub: 1,
       // markers: true,
       start: "-100px center",
-      // end: "",
-      onEnter: (item) => {
-        item.trigger.classList.add('card-text-background')
-      },
-      onLeave: (item) => {
-        item.trigger.classList.remove('card-text-background')
-      },
-      onEnterBack: (item) => {
-        item.trigger.classList.add('card-text-background')
-      },
-      onLeaveBack: (item) => {
-        item.trigger.classList.remove('card-text-background')
-      },
     },
-    backgroundPosition: "200% 0%",
+    keyframes: [
+      { yPercent: 0, opacity: 1 },
+      { yPercent: 0, opacity: 1 },
+      { yPercent: 0, opacity: 0 }
+    ]
   })
 
-  // card1anim = gsap.to(".card1",
-  //   {
-  //     scrollTrigger: {
-  //       scroller: outerContainer,
-  //       trigger: ".card1container",
-  //       scrub: 1,
-  //       invalidateOnRefresh: true,
-  //       // markers: true,
-  //       start: "-300px center",
-  //       end: "bottom center",
-  //     },
-  //     keyframes: [
-  //       { scale: 1.1 },
-  //       { scale: 1 }
-  //     ],
-  //     rotateY: "90deg",
-  //     y: -300,
-  //     x: window.innerWidth / 1.5,
-  //     ease: "none",
-  //   }
-  // )
 
   card2anim = gsap.to(".card2",
     {
@@ -1413,85 +1411,6 @@ let resizeVariables = () => {
   else {
     lenis.resize()
   }
-
-  card1anim.kill()
-  card2anim.kill()
-  card3anim.kill()
-
-  card1anim = gsap.to(".card1",
-    {
-      scrollTrigger: {
-        scroller: outerContainer,
-        trigger: ".card1container",
-        scrub: 1,
-        invalidateOnRefresh: true,
-        // markers: true,
-        start: "-300px center",
-        end: "bottom center",
-      },
-      keyframes: [
-        { scale: 1.1 },
-        { scale: 1 }
-      ],
-      rotateY: "90deg",
-      y: -300,
-      x: window.innerWidth / 1.5,
-      ease: "none",
-    }
-  )
-
-  card2anim = gsap.to(".card2",
-    {
-      scrollTrigger: {
-        scroller: outerContainer,
-        trigger: ".card2container",
-        scrub: 1,
-        invalidateOnRefresh: true,
-        // markers: true,
-        start: "-300px center",
-        end: "bottom center",
-      },
-      keyframes: [
-        { scale: 1.1 },
-        { scale: 1 }
-      ],
-      rotateY: "90deg",
-      y: -300,
-      x: window.innerWidth / 1.5,
-      ease: "none"
-
-    }
-  )
-
-  card3anim = gsap.to(".card3",
-    {
-      scrollTrigger: {
-        scroller: outerContainer,
-        trigger: ".card3container",
-        scrub: 1,
-        invalidateOnRefresh: true,
-        // markers: true,
-        start: "-300px center",
-        end: "bottom center",
-        onLeave: () => {
-          console.log('comp')
-          global.pivotModel.visible = false
-        },
-        onEnterBack: () => {
-          console.log('reenter')
-          global.pivotModel.visible = true
-        }
-      },
-      keyframes: [
-        { scale: 1.1 },
-        { scale: 1 }
-      ],
-      rotateY: "90deg",
-      y: -300,
-      x: window.innerWidth / 1.5,
-      ease: "none",
-    }
-  )
 }
 
 function onWindowResize() {
