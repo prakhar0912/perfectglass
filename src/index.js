@@ -1,12 +1,13 @@
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import Stats from "three/examples/jsm/libs/stats.module.js";
-
+import { CustomEase } from "gsap/CustomEase";
+import { SplitText } from "gsap/SplitText";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 // ScrollSmoother requires ScrollTrigger
-import { ScrollSmoother } from "gsap/ScrollSmoother";
-import { ScrollToPlugin } from "gsap/ScrollToPlugin";
-gsap.registerPlugin(ScrollTrigger, ScrollSmoother, ScrollToPlugin);
+// import { ScrollSmoother } from "gsap/ScrollSmoother";
+// import { ScrollToPlugin } from "gsap/ScrollToPlugin";
+gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText);
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -20,9 +21,10 @@ import Splide from "@splidejs/splide";
 
 import Mountains from "../assets/glasshex.jpg"
 import transparent from "../public/transparent.hdr"
-import glassBottle from "../public/withoutwater.glb"
+import glassBottle from "../public/finalbottle1.glb"
 import bottlePng from "../public/bottle.png"
-
+import whiteLogo from '../assets/white_logo.png'
+import blackLogo from '../assets/logo.png'
 
 const imageAspect = 1.7775510
 const modelAspect = 0.01
@@ -32,19 +34,7 @@ stats.showPanel(0);
 document.body.appendChild(stats.dom)
 
 
-// const lenis = new Lenis();
 
-// // Synchronize Lenis scrolling with GSAP's ScrollTrigger plugin
-// lenis.on('scroll', ScrollTrigger.update);
-
-// // Add Lenis's requestAnimationFrame (raf) method to GSAP's ticker
-// // This ensures Lenis's smooth scroll animation updates on each GSAP tick
-// gsap.ticker.add((time) => {
-//   lenis.raf(time * 1000); // Convert time from seconds to milliseconds
-// });
-
-// // Disable lag smoothing in GSAP to prevent any delay in scroll animations
-// gsap.ticker.lagSmoothing(0);
 
 
 
@@ -96,16 +86,48 @@ let addDirLights = (x, y, z, target, intensity) => {
   // scene.add(helper)
 }
 
-
-
-// request animation frame
-
-
 async function setupEnv() {
   const tex = await rgbeLoader.loadAsync(transparent);
   tex.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = tex;
   scene.environment = tex;
+}
+
+const isUserUsingMobile = () => {
+  // 1. Check for touch events capability
+  let hasTouchScreen = false;
+  if ("maxTouchPoints" in navigator) {
+    hasTouchScreen = navigator.maxTouchPoints > 0;
+  } else if ("msMaxTouchPoints" in navigator) {
+    hasTouchScreen = navigator.msMaxTouchPoints > 0;
+  } else {
+    // Fallback for older browsers
+    const mQ = window.matchMedia && matchMedia("(pointer:coarse)");
+    if (mQ && mQ.media === "(pointer:coarse)") {
+      hasTouchScreen = !!mQ.matches;
+    } else if ('orientation' in window) {
+      hasTouchScreen = true; // Deprecated, but good fallback
+    }
+  }
+
+  console.log(hasTouchScreen)
+
+  // 2. Combine with User Agent check as a final fallback
+  if (!hasTouchScreen) {
+    const UA = navigator.userAgent;
+    hasTouchScreen = (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(UA));
+  }
+
+  return hasTouchScreen;
+};
+
+
+if (isUserUsingMobile()) {
+  console.log('mobile')
+  global.isMobile = true
+} else {
+  console.log('not mobile')
+  global.isMobile = false
 }
 
 global.mixer = null
@@ -116,17 +138,38 @@ global.animationPosition = (window.innerWidth / 1900) * 20
 global.animationRotation = 6
 global.modelScale = 1.4
 global.stopPositionAnimation = false
-global.isMobile = true
 global.aspectRatio = window.innerWidth / window.innerHeight
 global.scale = [1, 1]
 addDirLights(0, 10, 0, global.pivotModel, 2)
 addDirLights(-20, 10, 0, global.pivotModel, 2)
 addDirLights(20, 10, 0, global.pivotModel, 2)
 
-// if(global.isMobile){
-//   global.modelScale = 10
-// }
 
+if (global.isMobile) {
+  global.modelScale = 10
+}
+
+let outerContainer = document.querySelector(".wrapper")
+
+let lenis;
+if (!global.isMobile) {
+  lenis = new Lenis({
+    wrapper: outerContainer,
+    content: outerContainer
+  });
+
+  // Synchronize Lenis scrolling with GSAP's ScrollTrigger plugin
+  lenis.on('scroll', ScrollTrigger.update);
+
+  // Add Lenis's requestAnimationFrame (raf) method to GSAP's ticker
+  // This ensures Lenis's smooth scroll animation updates on each GSAP tick
+  gsap.ticker.add((time) => {
+    lenis.raf(time * 1000); // Convert time from seconds to milliseconds
+  });
+
+  // Disable lag smoothing in GSAP to prevent any delay in scroll animations
+  gsap.ticker.lagSmoothing(0);
+}
 
 
 async function setupMeshTransmissionMaterial() {
@@ -207,13 +250,6 @@ async function setupMeshTransmissionMaterial() {
         }
       }
     });
-
-
-
-    // global.pivotModel.rotation.z += Math.PI/4
-    // global.pivotModel.rotation.x += -2*(Math.PI/6)
-
-
 
     // addTransmissionGui(gui, meshTransmissionMaterial, mtmParams);
 
@@ -513,10 +549,12 @@ void main()	{
 
 
     // this.container.style.touchAction = 'none'
-    // document.body.addEventListener('pointermove', this.onPointerMove.bind(this))
     if (global.isMobile) {
       document.body.addEventListener('touchmove', this.onPointerMove.bind(this))
       document.body.addEventListener('touchstart', this.onPointerMove.bind(this))
+    }
+    else {
+      document.body.addEventListener('pointermove', this.onPointerMove.bind(this))
     }
 
 
@@ -865,7 +903,7 @@ void main() {
 
       if (intersects.length > 0) {
         const point = intersects[0].point
-        console.log(global.scale)
+        // console.log(global.scale)
         if (global.isMobile) {
           point.x = point.x * 1 / scale[0]
         }
@@ -905,9 +943,15 @@ if (window.innerWidth < 620) {
   global.stopPositionAnimation = true
 }
 
+let sec2anim;
+let sec3anim;
+let sec4anim;
+let mobileanim;
+let card1anim;
+let card2anim;
+let card3anim;
 
 let playAnimations = () => {
-
   let t1 = gsap.timeline({ paused: false })
 
   t1.fromTo(global.pivotModel.scale, {
@@ -932,8 +976,34 @@ let playAnimations = () => {
         repeat: -1
       })
 
-  let sec2anim = ScrollTrigger.create({
-    scroller: document.body,
+  document.querySelectorAll('.ticker').forEach(ticker => {
+    const inner = ticker.querySelector('.ticker-wrap')
+    const content = inner.querySelector('.ticker-text')
+    const duration = ticker.getAttribute('data-duration')
+    inner.append(content.cloneNode(true))
+
+    const animations = []
+    inner.querySelectorAll('.ticker-text').forEach(element => {
+      const animation = gsap.to(element, {
+        x: "-100%",
+        repeat: -1,
+        duration: duration,
+        ease: 'linear'
+      })
+      animations.push(animation)
+    })
+
+    ticker.addEventListener('mouseenter', () => {
+      animations.forEach(anim => anim.pause())
+    })
+
+    ticker.addEventListener('mouseleave', () => {
+      animations.forEach(anim => anim.play())
+    })
+  })
+
+  sec2anim = ScrollTrigger.create({
+    scroller: outerContainer,
     trigger: '.section2',
     start: 'top bottom',
     endTrigger: '.section2',
@@ -956,8 +1026,8 @@ let playAnimations = () => {
       global.rotateModel = true
     }
   });
-  let sec3anim = ScrollTrigger.create({
-    scroller: document.body,
+  sec3anim = ScrollTrigger.create({
+    scroller: outerContainer,
     trigger: '.section3',
     start: 'top bottom',
     endTrigger: '.section3',
@@ -968,8 +1038,8 @@ let playAnimations = () => {
       global.pivotModel.rotation.y = self.progress.toFixed(4) * (-2 * Math.PI)
     }
   });
-  let sec4anim = ScrollTrigger.create({
-    scroller: document.body,
+  sec4anim = ScrollTrigger.create({
+    scroller: outerContainer,
     trigger: '.section4',
     start: 'top bottom',
     endTrigger: '.section4',
@@ -984,32 +1054,104 @@ let playAnimations = () => {
     }
   });
 
-  gsap.to(".card1",
-    {
-      scrollTrigger: {
-        scroller: document.body,
-        trigger: ".card1container",
-        scrub: 1,
-        invalidateOnRefresh: true,
-        // markers: true,
-        start: "-300px center",
-        end: "bottom center",
+  gsap.to(".card1container", {
+    scrollTrigger: {
+      scroller: outerContainer,
+      trigger: ".card1container",
+      scrub: 1,
+      // markers: true,
+      start: "-100px center",
+      // end: "",
+      onEnter: (item) => {
+        item.trigger.classList.add('card-text-background')
       },
-      keyframes: [
-        { scale: 1.1 },
-        { scale: 1 }
-      ],
-      rotateY: "90deg",
-      y: -300,
-      x: window.innerWidth / 1.5,
-      ease: "none"
-    }
-  )
+      onLeave: (item) => {
+        item.trigger.classList.remove('card-text-background')
+      },
+      onEnterBack: (item) => {
+        item.trigger.classList.add('card-text-background')
+      },
+      onLeaveBack: (item) => {
+        item.trigger.classList.remove('card-text-background')
+      },
+    },
+    backgroundPosition: "200% 0%",
+  })
 
-  gsap.to(".card2",
+  gsap.to(".card2container", {
+    scrollTrigger: {
+      scroller: outerContainer,
+      trigger: ".card2container",
+      scrub: 1,
+      // markers: true,
+      start: "-100px center",
+      // end: "",
+      onEnter: (item) => {
+        item.trigger.classList.add('card-text-background')
+      },
+      onLeave: (item) => {
+        item.trigger.classList.remove('card-text-background')
+      },
+      onEnterBack: (item) => {
+        item.trigger.classList.add('card-text-background')
+      },
+      onLeaveBack: (item) => {
+        item.trigger.classList.remove('card-text-background')
+      },
+    },
+    backgroundPosition: "200% 0%",
+  })
+
+  gsap.to(".card3container", {
+    scrollTrigger: {
+      scroller: outerContainer,
+      trigger: ".card3container",
+      scrub: 1,
+      // markers: true,
+      start: "-100px center",
+      // end: "",
+      onEnter: (item) => {
+        item.trigger.classList.add('card-text-background')
+      },
+      onLeave: (item) => {
+        item.trigger.classList.remove('card-text-background')
+      },
+      onEnterBack: (item) => {
+        item.trigger.classList.add('card-text-background')
+      },
+      onLeaveBack: (item) => {
+        item.trigger.classList.remove('card-text-background')
+      },
+    },
+    backgroundPosition: "200% 0%",
+  })
+
+  // card1anim = gsap.to(".card1",
+  //   {
+  //     scrollTrigger: {
+  //       scroller: outerContainer,
+  //       trigger: ".card1container",
+  //       scrub: 1,
+  //       invalidateOnRefresh: true,
+  //       // markers: true,
+  //       start: "-300px center",
+  //       end: "bottom center",
+  //     },
+  //     keyframes: [
+  //       { scale: 1.1 },
+  //       { scale: 1 }
+  //     ],
+  //     rotateY: "90deg",
+  //     y: -300,
+  //     x: window.innerWidth / 1.5,
+  //     ease: "none",
+  //   }
+  // )
+
+  card2anim = gsap.to(".card2",
     {
       scrollTrigger: {
-        scroller: document.body,
+        scroller: outerContainer,
         trigger: ".card2container",
         scrub: 1,
         invalidateOnRefresh: true,
@@ -1029,10 +1171,10 @@ let playAnimations = () => {
     }
   )
 
-  gsap.to(".card3",
+  card3anim = gsap.to(".card3",
     {
       scrollTrigger: {
-        scroller: document.body,
+        scroller: outerContainer,
         trigger: ".card3container",
         scrub: 1,
         invalidateOnRefresh: true,
@@ -1061,26 +1203,295 @@ let playAnimations = () => {
   new Splide('.splide', {
     type: 'loop',
     perPage: 3,
-    focus: 'center'
+    focus: 'center',
+    breakpoints: {
+      1200: {
+        perPage: 2
+      },
+      813: {
+        perPage: 1
+      }
+    }
   }).mount();
+
+  mobileanim = ScrollTrigger.create({
+    scroller: outerContainer,
+    trigger: '.section2',
+    start: 'top bottom',
+    endTrigger: '.section2',
+    end: 'center bottom',
+    // markers: true,
+    onUpdate: (self) => {
+      global.pivotModel.position.set(0, self.progress.toFixed(4) * 2, 0)
+      global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI)
+    },
+  })
+  mobileanim.disable()
 
   if (global.stopPositionAnimation) {
     sec2anim.disable()
     sec3anim.disable()
     sec4anim.disable()
-    ScrollTrigger.create({
-      scroller: document.body,
-      trigger: '.section2',
-      start: 'top bottom',
-      endTrigger: '.section2',
-      end: 'center bottom',
-      // markers: true,
-      onUpdate: (self) => {
-        global.pivotModel.position.set(0, self.progress.toFixed(4) * 2, 0)
-        global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI)
-      },
-    })
+    mobileanim.enable()
   }
+
+  CustomEase.create('hop', ".87, 0, .13, 1")
+
+  const textContainers = document.querySelectorAll(".menu-col")
+  let splitTextByContainer = []
+
+  textContainers.forEach((container) => {
+    const textElements = container.querySelectorAll("a, p")
+    let containerSplits = []
+
+    textElements.forEach((element) => {
+      const split = SplitText.create(element, {
+        type: "lines",
+        mask: "lines",
+        linesClass: "line"
+      })
+      containerSplits.push(split)
+      gsap.set(split.lines, { y: "110%" })
+    })
+    splitTextByContainer.push(containerSplits)
+  })
+
+  const container = document.querySelector(".outerContainer")
+  const menuToggleBtn = document.querySelector(".menu-toggle-btn");
+  const menuOverlay = document.querySelector(".menu-overlay")
+  const menuOverlayContainer = document.querySelector('.menu-overlay-content')
+  const menuMediaWrapper = document.querySelector(".menu-media-wrapper")
+  const copyContainers = document.querySelectorAll('.menu-cols')
+  const menuToggleLabel = document.querySelector('.menu-toggle-label p')
+  const hamburgerIcon = document.querySelector(".menu-hamburger-icon")
+  const mobileLogo = document.querySelector('.mobile-logo')
+
+  let isMenuOpen = false;
+  let isAnimating = false;
+
+  let toggleMenu = () => {
+    if (isAnimating) return
+    if (!isMenuOpen) {
+      isAnimating = true
+      if (lenis) {
+        lenis.stop()
+      }
+      mobileLogo.setAttribute("src", whiteLogo)
+
+      const t1 = gsap.timeline()
+      t1.to(menuToggleLabel, {
+        y: "-110%",
+        duration: 1,
+        ease: "hop"
+      }).to(outerContainer, {
+        y: "100svh",
+        duration: 1,
+        ease: "hop",
+      }, "<").to(menuOverlay, {
+        clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+        duration: 1,
+        ease: "hop"
+      }, "<").to(menuOverlayContainer, {
+        yPercent: 0,
+        duration: 1,
+        ease: 'hop'
+      }, "<")
+
+      splitTextByContainer.forEach((containerSplits) => {
+        const copyLines = containerSplits.flatMap((split) => split.lines)
+        t1.to(copyLines, {
+          y: "0%",
+          duration: 2,
+          ease: 'hop',
+          stagger: -0.075,
+        }, -0.15)
+
+      })
+
+      hamburgerIcon.classList.add('active')
+      t1.call(() => {
+        isAnimating = false;
+      })
+      console.log('opened')
+      isMenuOpen = true
+
+    }
+    else {
+      isAnimating = true
+      hamburgerIcon.classList.remove('active')
+      const t1 = gsap.timeline()
+      t1.to(outerContainer, {
+        y: "0svh",
+        duration: 1,
+        ease: "hop",
+        clearProps: "all",
+      }, "<").to(menuOverlay, {
+        clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
+        duration: 1,
+        ease: "hop"
+      }, "<").to(menuOverlayContainer, {
+        yPercent: -50,
+        duration: 0.5,
+        ease: 'hop',
+        delay: 0.3
+      }, "<").to(menuToggleLabel, {
+        y: "-0%",
+        duration: 1,
+        ease: "hop",
+        onStart: () => {
+          mobileLogo.setAttribute("src", blackLogo)
+        }
+      }).to(copyContainers, {
+        opacity: 0.25,
+        duration: 0.75,
+        ease: "power2.out",
+        delay: 0.5,
+      }, "<")
+
+
+      t1.call(() => {
+        splitTextByContainer.forEach((containerSplits) => {
+          const copyLines = containerSplits.flatMap((split) => split.lines)
+          gsap.set(copyLines, { y: "-110%" })
+        })
+        gsap.set(copyContainers, { opacity: 1 })
+        gsap.set(menuMediaWrapper, { opacity: 0 })
+        isAnimating = false
+        if (lenis) {
+          lenis.start()
+        }
+      })
+      isMenuOpen = false
+    }
+  }
+
+  menuToggleBtn.addEventListener("click", toggleMenu)
+
+}
+
+
+let resizeVariables = () => {
+  if (window.innerWidth < 1090) {
+    global.animationPosition = (window.innerWidth / 1900) * 18
+  }
+  else {
+    global.animationPosition = (window.innerWidth / 1900) * 20
+  }
+
+  if (window.innerWidth < 850) {
+    global.modelScale = 1.3
+    global.animationRotation = 8
+  }
+
+  if (window.innerWidth < 730) {
+    global.animationRotation = 10
+  }
+
+  if (window.innerWidth < 620) {
+    global.stopPositionAnimation = true
+  }
+  else {
+    global.stopPositionAnimation = false
+  }
+
+  if (global.stopPositionAnimation) {
+    sec2anim.disable()
+    sec3anim.disable()
+    sec4anim.disable()
+    mobileanim.enable()
+  }
+  else {
+    sec2anim.enable()
+    sec3anim.enable()
+    sec4anim.enable()
+    mobileanim.disable()
+  }
+
+  if (global.isMobile) {
+    lenis.destroy()
+  }
+  else {
+    lenis.resize()
+  }
+
+  card1anim.kill()
+  card2anim.kill()
+  card3anim.kill()
+
+  card1anim = gsap.to(".card1",
+    {
+      scrollTrigger: {
+        scroller: outerContainer,
+        trigger: ".card1container",
+        scrub: 1,
+        invalidateOnRefresh: true,
+        // markers: true,
+        start: "-300px center",
+        end: "bottom center",
+      },
+      keyframes: [
+        { scale: 1.1 },
+        { scale: 1 }
+      ],
+      rotateY: "90deg",
+      y: -300,
+      x: window.innerWidth / 1.5,
+      ease: "none",
+    }
+  )
+
+  card2anim = gsap.to(".card2",
+    {
+      scrollTrigger: {
+        scroller: outerContainer,
+        trigger: ".card2container",
+        scrub: 1,
+        invalidateOnRefresh: true,
+        // markers: true,
+        start: "-300px center",
+        end: "bottom center",
+      },
+      keyframes: [
+        { scale: 1.1 },
+        { scale: 1 }
+      ],
+      rotateY: "90deg",
+      y: -300,
+      x: window.innerWidth / 1.5,
+      ease: "none"
+
+    }
+  )
+
+  card3anim = gsap.to(".card3",
+    {
+      scrollTrigger: {
+        scroller: outerContainer,
+        trigger: ".card3container",
+        scrub: 1,
+        invalidateOnRefresh: true,
+        // markers: true,
+        start: "-300px center",
+        end: "bottom center",
+        onLeave: () => {
+          console.log('comp')
+          global.pivotModel.visible = false
+        },
+        onEnterBack: () => {
+          console.log('reenter')
+          global.pivotModel.visible = true
+        }
+      },
+      keyframes: [
+        { scale: 1.1 },
+        { scale: 1 }
+      ],
+      rotateY: "90deg",
+      y: -300,
+      x: window.innerWidth / 1.5,
+      ease: "none",
+    }
+  )
 }
 
 function onWindowResize() {
@@ -1094,7 +1505,6 @@ function onWindowResize() {
   const aspectRatio = newWidth / newHeight;
   global.aspectRatio = aspectRatio
   global.scale = [1, 1]
-  console.log(aspectRatio)
   if (imageAspect > aspectRatio) {
     global.scale = [imageAspect / aspectRatio, 1]
   }
@@ -1111,6 +1521,7 @@ function onWindowResize() {
 
     camera.updateProjectionMatrix();
   app.resize(global.scale)
+  resizeVariables()
   ScrollTrigger.refresh();
 }
 
@@ -1119,7 +1530,7 @@ window.addEventListener('resize', onWindowResize, false);
 function render() {
   stats.begin()
   requestAnimationFrame(render)
-  const delta = clock.getDelta()
+  // const delta = clock.getDelta()
 
   // if (global.mixer != null) {
   //   global.mixer.update(delta)
