@@ -469,7 +469,7 @@ h1>i {
     transform: translateX(20px) rotate(90deg);
     transform-origin: left;
     /* background-color: rgb(203, 203, 203); */
-    width: 200vh;
+    width: 150vh;
 }
 
 .ticker4 {
@@ -478,7 +478,7 @@ h1>i {
     transform: translateX(-30px) rotate(-90deg);
     transform-origin: right;
     /* background-color: rgb(203, 203, 203); */
-    width: 200vh;
+    width: 150vh;
 
 }
 
@@ -624,8 +624,55 @@ h1>i {
     position: relative;
     /* overflow-x: hidden;
     overflow-y: auto; */
+    min-height: 150vh !important;
 
 }
+
+.blogs-container{
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1000;
+    color: white;
+    height: 100vh;
+    width: 100vw;
+    opacity: 0;
+}
+
+.blogs-container > span{
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+
+.blogs-container > span:nth-child(1){
+    left: 50%;
+    top: calc(50% - 340px);
+}
+.blogs-container > span:nth-child(2){
+    left: calc(50% + 295px);
+    top: calc(50% - 170px);
+}
+.blogs-container > span:nth-child(3){
+    left: calc(50% + 295px);
+    top: calc(50% + 170px);
+}
+
+.blogs-container > span:nth-child(4){
+    left: calc(50% + 0px);
+    top: calc(50% + 340px);
+}
+
+.blogs-container > span:nth-child(5){
+    left: calc(50% - 295px);
+    top: calc(50% + 170px);
+}
+
+.blogs-container > span:nth-child(6){
+    left: calc(50% - 295px);
+    top: calc(50% - 170px);
+}
+
 
 .cards-container {
     position: relative;

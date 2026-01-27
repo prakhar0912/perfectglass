@@ -19,12 +19,15 @@ import { SimplexNoise } from "three-stdlib";
 import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer"
 import Splide from "@splidejs/splide";
 
-import Mountains from "../assets/glasshex.jpg"
+
+import Mountains from "../assets/mountains8.png"
 import transparent from "../public/transparent.hdr"
 import glassBottle from "../public/finalbottle1.glb"
 import bottlePng from "../public/bottle.png"
 import whiteLogo from '../assets/white_logo.png'
 import blackLogo from '../assets/logo.png'
+import earthMap from '../assets/earth_map.jpg'
+import glassHex from '../assets/glasshex.jpg'
 
 const imageAspect = 1.7775510
 const modelAspect = 0.01
@@ -140,6 +143,9 @@ global.modelScale = 1.4
 global.stopPositionAnimation = false
 global.aspectRatio = window.innerWidth / window.innerHeight
 global.scale = [1, 1]
+
+global.normalTex = null
+global.blackBg = null
 addDirLights(0, 10, 0, global.pivotModel, 2)
 addDirLights(-20, 10, 0, global.pivotModel, 2)
 addDirLights(20, 10, 0, global.pivotModel, 2)
@@ -355,6 +361,33 @@ function addTransmissionGui(gui, mat, mtmParams) {
   fol.add(mat, "attenuationDistance", 0, 2);
 }
 
+let updateEarth = () => { }
+global.earthModel = new THREE.Group();
+
+async function setupEarth() {
+
+  let earthMapTex = await loadTexture(earthMap)
+  const material = new THREE.MeshStandardMaterial({
+    map: earthMapTex,
+  });
+
+  const geometry = new THREE.IcosahedronGeometry(1, 12);
+
+  model = new THREE.Mesh(geometry, material);
+  model.position.set(0, -3, 0)
+  model.scale.set(10, 10, 10)
+  model.position.set(0, 0, 0)
+
+  global.earthModel.add(model)
+  global.earthModel.scale.set(0, 0, 0)
+  // global.earthModel.visible = false
+  scene.add(global.earthModel)
+
+  updateEarth = () => {
+    global.earthModel.rotation.y += 0.002
+  }
+}
+
 const loadTexture = async (url) => {
   let textureLoader = new THREE.TextureLoader()
   return new Promise(resolve => {
@@ -394,14 +427,15 @@ function createColorTexture(color) {
 
 const params = {
   // general scene params
-  mouseSize: 0.5,
-  viscosity: 0.97,
-  waveHeight: 0.04
+  mouseSize: 0.4,
+  viscosity: 0.87,
+  waveHeight: 0.02
 }
 
 if (global.isMobile) {
   params.mouseSize = 0.3
 }
+
 
 // Texture width for simulation
 const FBO_WIDTH = 512
@@ -536,6 +570,9 @@ void main()	{
 
     // let Texture = colorTexture
     let Texture = await loadTexture(Mountains)
+    global.normalTex = Texture
+    global.blackBg = await loadTexture(glassHex)
+    global.blackBg.colorSpace = THREE.SRGBColorSpace
     // assigning image textures with SRGBColorSpace is essential in getting the rendered colors correct
     Texture.colorSpace = THREE.SRGBColorSpace
 
@@ -768,6 +805,8 @@ void main() {
     this.material.uniforms['opacity'].value = this.material.opacity
     this.material.uniforms['map'].value = Texture
 
+
+
     // Defines
     this.material.defines.FBO_WIDTH = FBO_WIDTH.toFixed(1)
     this.material.defines.FBO_HEIGHT = FBO_HEIGHT.toFixed(1)
@@ -963,11 +1002,9 @@ let playAnimations = () => {
     end: "max",
     // markers: true,
     onEnter: () => {
-      console.log('huh')
       document.querySelector('.nav-container').classList.add('nav-bg')
     },
     onLeaveBack: () => {
-      console.log('huh')
       document.querySelector('.nav-container').classList.remove('nav-bg')
     },
     onUpdate: (self) => {
@@ -977,9 +1014,8 @@ let playAnimations = () => {
 
 
 
-  let t1 = gsap.timeline({ paused: false })
 
-  t1.fromTo(global.pivotModel.scale, {
+  gsap.fromTo(global.pivotModel.scale, {
     x: 0,
     y: 0,
     z: 0,
@@ -991,16 +1027,17 @@ let playAnimations = () => {
     duration: 1.5,
     ease: "power2.out",
   })
-    .to(global.pivotModel.scale,
-      {
-        z: 1.1,
-        y: 1.1,
-        x: 1.1,
-        duration: 1,
-        yoyo: true,
-        repeat: -1,
-        // ease: "power2.in"
-      })
+  let yoyo = gsap.to(global.pivotModel.scale,
+    {
+      z: 1.1,
+      y: 1.1,
+      x: 1.1,
+      duration: 1,
+      yoyo: true,
+      repeat: -1,
+      // ease: "power2.in"
+      delay: 1.6
+    })
 
   document.querySelectorAll('.ticker').forEach(ticker => {
     const inner = ticker.querySelector('.ticker-wrap')
@@ -1047,10 +1084,22 @@ let playAnimations = () => {
         duration: 0.1,
         ease: "power2.out"
       })
+
+      // app.material.uniforms['map'].value = global.blackBg
+      // app.waterMesh.needsUpdate = true
+      // app.waterMesh.updateMatrix()
+      // app.material.map = global.blackBg
+      // gsap.to(amlight, {
+      //   intensity: 0.5,
+      //   duration: 1,
+      //   ease: "power2.out"
+      // })
     },
     onLeaveBack: () => {
       global.rotateModel = true
-    }
+      // app.material.uniforms['map'].value = global.normalTex
+      // app.material.map = global.normalTex
+    },
   });
   sec3anim = ScrollTrigger.create({
     scroller: outerContainer,
@@ -1062,142 +1111,184 @@ let playAnimations = () => {
     onUpdate: (self) => {
       global.pivotModel.position.set(-global.animationPosition + (self.progress.toFixed(4) * (2 * global.animationPosition)), 2, 0)
       global.pivotModel.rotation.y = self.progress.toFixed(4) * (-2 * Math.PI)
+    },
+    onEnter: () => {
+      yoyo.pause()
     }
+  });
+  sec3BottomAnim = ScrollTrigger.create({
+    scroller: outerContainer,
+    trigger: '.section3',
+    start: 'center center',
+    endTrigger: '.section3',
+    end: 'bottom center',
+    // markers: true,
+    onEnter: () => {
+      yoyo.pause()
+    },
+    onUpdate: (self) => {
+      yoyo.pause()
+      global.pivotModel.position.set(global.animationPosition - (self.progress.toFixed(4) * global.animationPosition), 2, 0)
+      // global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI)
+      global.pivotModel.scale.set((1 - self.progress.toFixed(4)), (1 - self.progress.toFixed(4)), (1 - self.progress.toFixed(4)))
+    },
+    onLeaveBack: () => {
+      yoyo.play()
+    },
   });
   sec4anim = ScrollTrigger.create({
     scroller: outerContainer,
     trigger: '.section4',
-    start: 'top bottom',
+    start: 'top center',
     endTrigger: '.section4',
-    end: '200px bottom',
-    // markers: true,
-    onLeave: () => {
-      global.rotateModel = true
+    end: '200px center',
+    markers: true,
+    onEnter: () => {
+      // gsap.to(amlight, {
+      //   intensity: 0.01,
+      //   duration: 2,
+      //   ease: "power2.out"
+      // })
+      // gsap.to(global.earthModel.scale, {
+      //   x: 1,
+      //   y: 1,
+      //   z: 1,
+      //   duration: 2,
+      //   ease: "power2.in"
+      // })
     },
-    onUpdate: (self) => {
-      global.pivotModel.position.set(global.animationPosition - (self.progress.toFixed(4) * global.animationPosition), 2, 0)
-      global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI)
+    onLeave: () => {
+      // global.rotateModel = true
+      console.log('done')
+      gsap.to(amlight, {
+        intensity: 0,
+        duration: 1.4,
+        ease: "power2.out"
+      })
+      gsap.to(global.earthModel.scale, {
+        x: 1,
+        y: 1,
+        z: 1,
+        duration: 1.4,
+        ease: "power2.in"
+      })
+    },
+    onLeaveBack: () => {
+      console.log('in')
+      gsap.to(amlight, {
+        intensity: 3,
+        duration: 1.4,
+        ease: "power2.out"
+      })
+      gsap.to(global.earthModel.scale, {
+        x: 0,
+        y: 0,
+        z: 0,
+        duration: 0.7,
+        ease: "power2.out"
+      })
     }
   });
 
-  // gsap.to(global.pivotModel.scale, {
+
+  // gsap.to(".card1container", {
   //   scrollTrigger: {
   //     scroller: outerContainer,
-  //     trigger: '.section4',
-  //     start: 'top bottom',
-  //     endTrigger: '.section4',
-  //     end: 'bottom bottom',
-  //     markers: true,
-  //     scrub: true,
+  //     trigger: ".card1container",
+  //     scrub: 1,
+  //     // markers: true,
+  //     start: "-100px center",
   //   },
   //   keyframes: [
-  //     { x: 1.2, y: 1.2, z: 1.2 },
-  //     { x: 1.1, y: 1.1, z: 1.1 },
-  //     { x: 1.2, y: 1.2, z: 1.2 },
-  //     { x: 1.1, y: 1.1, z: 1.1 },
+  //     { yPercent: 0, opacity: 1 },
+  //     { yPercent: 0, opacity: 1 },
+  //     { yPercent: 0, opacity: 0 }
+  //   ]
+  // })
 
+  // gsap.to(".card2container", {
+  //   scrollTrigger: {
+  //     scroller: outerContainer,
+  //     trigger: ".card2container",
+  //     scrub: 1,
+  //     // markers: true,
+  //     start: "-100px center",
+  //   },
+  //   keyframes: [
+  //     { yPercent: 0, opacity: 1 },
+  //     { yPercent: 0, opacity: 1 },
+  //     { yPercent: 0, opacity: 0 }
+  //   ]
+  // })
+
+  // gsap.to(".card3container", {
+  //   scrollTrigger: {
+  //     scroller: outerContainer,
+  //     trigger: ".card3container",
+  //     scrub: 1,
+  //     // markers: true,
+  //     start: "-100px center",
+  //   },
+  //   keyframes: [
+  //     { yPercent: 0, opacity: 1 },
+  //     { yPercent: 0, opacity: 1 },
+  //     { yPercent: 0, opacity: 0 }
   //   ]
   // })
 
 
-  gsap.to(".card1container", {
-    scrollTrigger: {
-      scroller: outerContainer,
-      trigger: ".card1container",
-      scrub: 1,
-      // markers: true,
-      start: "-100px center",
-    },
-    keyframes: [
-      { yPercent: 0, opacity: 1 },
-      { yPercent: 0, opacity: 1 },
-      { yPercent: 0, opacity: 0 }
-    ]
-  })
+  // card2anim = gsap.to(".card2",
+  //   {
+  //     scrollTrigger: {
+  //       scroller: outerContainer,
+  //       trigger: ".card2container",
+  //       scrub: 1,
+  //       invalidateOnRefresh: true,
+  //       // markers: true,
+  //       start: "-300px center",
+  //       end: "bottom center",
+  //     },
+  //     keyframes: [
+  //       { scale: 1.1 },
+  //       { scale: 1 }
+  //     ],
+  //     rotateY: "90deg",
+  //     y: -300,
+  //     x: window.innerWidth / 1.5,
+  //     ease: "none"
 
-  gsap.to(".card2container", {
-    scrollTrigger: {
-      scroller: outerContainer,
-      trigger: ".card2container",
-      scrub: 1,
-      // markers: true,
-      start: "-100px center",
-    },
-    keyframes: [
-      { yPercent: 0, opacity: 1 },
-      { yPercent: 0, opacity: 1 },
-      { yPercent: 0, opacity: 0 }
-    ]
-  })
+  //   }
+  // )
 
-  gsap.to(".card3container", {
-    scrollTrigger: {
-      scroller: outerContainer,
-      trigger: ".card3container",
-      scrub: 1,
-      // markers: true,
-      start: "-100px center",
-    },
-    keyframes: [
-      { yPercent: 0, opacity: 1 },
-      { yPercent: 0, opacity: 1 },
-      { yPercent: 0, opacity: 0 }
-    ]
-  })
-
-
-  card2anim = gsap.to(".card2",
-    {
-      scrollTrigger: {
-        scroller: outerContainer,
-        trigger: ".card2container",
-        scrub: 1,
-        invalidateOnRefresh: true,
-        // markers: true,
-        start: "-300px center",
-        end: "bottom center",
-      },
-      keyframes: [
-        { scale: 1.1 },
-        { scale: 1 }
-      ],
-      rotateY: "90deg",
-      y: -300,
-      x: window.innerWidth / 1.5,
-      ease: "none"
-
-    }
-  )
-
-  card3anim = gsap.to(".card3",
-    {
-      scrollTrigger: {
-        scroller: outerContainer,
-        trigger: ".card3container",
-        scrub: 1,
-        invalidateOnRefresh: true,
-        // markers: true,
-        start: "-300px center",
-        end: "bottom center",
-        onLeave: () => {
-          console.log('comp')
-          global.pivotModel.visible = false
-        },
-        onEnterBack: () => {
-          console.log('reenter')
-          global.pivotModel.visible = true
-        }
-      },
-      keyframes: [
-        { scale: 1.1 },
-        { scale: 1 }
-      ],
-      rotateY: "90deg",
-      y: -300,
-      x: window.innerWidth / 1.5,
-      ease: "none",
-    }
-  )
+  // card3anim = gsap.to(".card3",
+  //   {
+  //     scrollTrigger: {
+  //       scroller: outerContainer,
+  //       trigger: ".card3container",
+  //       scrub: 1,
+  //       invalidateOnRefresh: true,
+  //       // markers: true,
+  //       start: "-300px center",
+  //       end: "bottom center",
+  //       onLeave: () => {
+  //         console.log('comp')
+  //         global.pivotModel.visible = false
+  //       },
+  //       onEnterBack: () => {
+  //         console.log('reenter')
+  //         global.pivotModel.visible = true
+  //       }
+  //     },
+  //     keyframes: [
+  //       { scale: 1.1 },
+  //       { scale: 1 }
+  //     ],
+  //     rotateY: "90deg",
+  //     y: -300,
+  //     x: window.innerWidth / 1.5,
+  //     ease: "none",
+  //   }
+  // )
   new Splide('.splide', {
     type: 'loop',
     perPage: 3,
@@ -1456,6 +1547,7 @@ function render() {
   //   // console.log(delta)
   // }
   // helper.update();
+  updateEarth()
   meshTransmissionMaterialUpdate(clock.elapsedTime);
   app.updateScene()
 
@@ -1500,6 +1592,7 @@ let main = async () => {
   await setupEnv();
   await setupMeshTransmissionMaterial();
   await app.initScene()
+  await setupEarth()
   render()
   playAnimations()
   window.scrollTo(0, 1)
