@@ -189730,6 +189730,7 @@ var sec4anim;
 var sec6anim;
 var mobileanim;
 var sec3BottomAnimMobile;
+var toggleMenu;
 var playAnimations = function playAnimations() {
   var showAnim = _gsap.gsap.from('.nav-container', {
     yPercent: -100,
@@ -189951,7 +189952,7 @@ var playAnimations = function playAnimations() {
       start: 'top center',
       endTrigger: '.section6',
       end: 'top+=200px center',
-      markers: true,
+      // markers: true,
       scrub: 1
     },
     x: 1,
@@ -190006,6 +190007,12 @@ var playAnimations = function playAnimations() {
   _CustomEase.CustomEase.create('hop', ".87, 0, .13, 1");
   var textContainers = document.querySelectorAll(".menu-col");
   var splitTextByContainer = [];
+
+  // document.querySelectorAll('.menu-col div').forEach((element) => {
+  //   console.log(element)
+  //   element.addEventListener('click', (el) => { console.log(el); toggleMenu(el.srcElement.id) })
+  // })
+
   textContainers.forEach(function (container) {
     var textElements = container.querySelectorAll("a, p");
     var containerSplits = [];
@@ -190033,7 +190040,7 @@ var playAnimations = function playAnimations() {
   var mobileLogo = document.querySelector('.mobile-logo');
   var isMenuOpen = false;
   var isAnimating = false;
-  var toggleMenu = function toggleMenu() {
+  toggleMenu = function toggleMenu(spec) {
     if (isAnimating) return;
     if (!isMenuOpen) {
       isAnimating = true;
@@ -190077,6 +190084,7 @@ var playAnimations = function playAnimations() {
       console.log('opened');
       isMenuOpen = true;
     } else {
+      console.log(spec);
       isAnimating = true;
       hamburgerIcon.classList.remove('active');
       var _t = _gsap.gsap.timeline();
@@ -190105,7 +190113,14 @@ var playAnimations = function playAnimations() {
         opacity: 0.25,
         duration: 0.75,
         ease: "power2.out",
-        delay: 0.5
+        delay: 0.5,
+        onComplete: function onComplete() {
+          if (spec) {
+            document.getElementById(spec).scrollIntoView({
+              behavior: 'smooth'
+            });
+          }
+        }
       }, "<");
       _t.call(function () {
         splitTextByContainer.forEach(function (containerSplits) {

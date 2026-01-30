@@ -33,9 +33,10 @@
           <div class="menu-content-main">
             <div class="menu-col">
               <div class="menu-link active"><a href="#" class="bg-color">Home</a></div>
-              <div class="menu-link"><a href="#" class="">About Us</a></div>
-              <div class="menu-link"><a href="#" class="">Our Impact</a></div>
-              <div class="menu-link"><a href="#" class="">Contact Us</a></div>
+              <div class="menu-link"><a href="#" id="aboutus">About Us</a></div>
+              <div class="menu-link"><a href="#" id="impact">Our Impact</a></div>
+              <div class="menu-link" onclick="window.open('https://surayee-2.myshopify.com/')"><a href="#" id="">Products</a></div>
+              <div class="menu-link"><a href="#" id="blogs">Blogs</a></div>
             </div>
           </div>
           <div class="menu-footer">
@@ -53,17 +54,17 @@
   </nav>
   <nav class="no-mobile">
     <div class="nav-container">
-      <p>ABOUT US</p>
-      <p onclick="window.open('./products.html')">PRODUCTS</p>
+      <p onclick="document.getElementById('aboutus').scrollIntoView({behavior: 'smooth'});">ABOUT US</p>
+      <p onclick="window.open('https://surayee-2.myshopify.com/')">PRODUCTS</p>
       <img class="logo" src="./assets/logo.png" alt="logo Image">
-      <p>OUR IMPACT</p>
-      <p>CONTACT US</p>
+      <p onclick="document.getElementById('impact').scrollIntoView({behavior: 'smooth'});" >OUR IMPACT</p>
+      <p onclick="document.getElementById('blogs').scrollIntoView({behavior: 'smooth'});">BLOGS</p>
     </div>
   </nav>
   <div class="wrapper">
     <canvas></canvas>
     <div class="outerContainer">
-      <section class="section1">
+      <section class="section1" id="section1">
         <h1>Your Sustainable <i class="bg-color">Hydration</i> Partner</h1>
         <div class="legal-container">
           <p>LEGAL</p>
@@ -81,7 +82,7 @@
           </div>
         </div> -->
       </section>
-      <section class="section2">
+      <section class="section2" id="impact">
         <div class="section2container">
           <h1>Making every <br><i class="bg-color">bottle </i> count.</h1>
           <div class="stats-container">
@@ -116,7 +117,7 @@
           </div>
         </div>
       </section>
-      <section class="section3">
+      <section class="section3" id="aboutus">
         <div class="section3container">
           <div class="heading-container">
             <h1>Why</h1>
@@ -144,7 +145,7 @@
           </div>
         </div>
       </section>
-      <section class="section4">
+      <section class="section4" id="blogs">
         <div class="ticker ticker3" data-duration="20">
           <div class="ticker-wrap">
             <div class="ticker-text">HEALTHIER WATER • HAPPIER PLANET • <span class="bg-color">HEALTHIER WATER • HAPPIER

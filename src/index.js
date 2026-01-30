@@ -993,7 +993,7 @@ if (window.innerWidth < 1090) {
 if (window.innerWidth < 850) {
   global.modelScale = 1.3
   global.animationRotation = 8
-  global.earthScale = window.innerWidth/1115
+  global.earthScale = window.innerWidth / 1115
 }
 
 if (window.innerWidth < 730) {
@@ -1001,7 +1001,7 @@ if (window.innerWidth < 730) {
 }
 
 if (window.innerWidth < 435) {
-  global.earthScale = window.innerWidth/1325
+  global.earthScale = window.innerWidth / 1325
 }
 
 if (window.innerWidth < 570) {
@@ -1020,6 +1020,7 @@ let sec4anim;
 let sec6anim;
 let mobileanim;
 let sec3BottomAnimMobile;
+let toggleMenu;
 
 let playAnimations = () => {
 
@@ -1255,7 +1256,7 @@ let playAnimations = () => {
       start: 'top center',
       endTrigger: '.section6',
       end: 'top+=200px center',
-      markers: true,
+      // markers: true,
       scrub: 1
     },
     x: 1,
@@ -1316,6 +1317,12 @@ let playAnimations = () => {
   const textContainers = document.querySelectorAll(".menu-col")
   let splitTextByContainer = []
 
+  // document.querySelectorAll('.menu-col div').forEach((element) => {
+  //   console.log(element)
+  //   element.addEventListener('click', (el) => { console.log(el); toggleMenu(el.srcElement.id) })
+  // })
+
+
   textContainers.forEach((container) => {
     const textElements = container.querySelectorAll("a, p")
     let containerSplits = []
@@ -1345,7 +1352,7 @@ let playAnimations = () => {
   let isMenuOpen = false;
   let isAnimating = false;
 
-  let toggleMenu = () => {
+  toggleMenu = (spec) => {
     if (isAnimating) return
     if (!isMenuOpen) {
       isAnimating = true
@@ -1393,6 +1400,7 @@ let playAnimations = () => {
 
     }
     else {
+      console.log(spec)
       isAnimating = true
       hamburgerIcon.classList.remove('active')
       const t1 = gsap.timeline()
@@ -1422,6 +1430,13 @@ let playAnimations = () => {
         duration: 0.75,
         ease: "power2.out",
         delay: 0.5,
+        onComplete: () => {
+          if (spec) {
+            document.getElementById(spec).scrollIntoView({
+              behavior: 'smooth'
+            });
+          }
+        }
       }, "<")
 
 
@@ -1457,7 +1472,7 @@ let resizeVariables = () => {
   if (window.innerWidth < 850) {
     global.modelScale = 1.3
     global.animationRotation = 8
-    global.earthScale = window.innerWidth/850
+    global.earthScale = window.innerWidth / 850
     console.log(global.earthScale)
   }
 

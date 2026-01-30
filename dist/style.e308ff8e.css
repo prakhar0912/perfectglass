@@ -218,7 +218,7 @@ nav.mobile {
     height: 100vh;
     pointer-events: none;
     overflow: hidden;
-    z-index: 2;
+    z-index: 1001;
 }
 
 .menu-bar {
@@ -1318,32 +1318,32 @@ h1>i {
 
     .blogs-container>span:nth-child(1) {
         left: 50%;
-        top: calc(50% - 35.9vw);
+        top: calc(50svh - 35.9vw);
     }
 
     .blogs-container>span:nth-child(2) {
         left: calc(50% + (29.5vw));
-        top: calc(50% - (17.4vw));
+        top: calc(50svh - (17.4vw));
     }
 
     .blogs-container>span:nth-child(3) {
         left: calc(50% + (29.5vw));
-        top: calc(50% + (17.4vw));
+        top: calc(50svh + (17.4vw));
     }
 
     .blogs-container>span:nth-child(4) {
         left: calc(50%);
-        top: calc(50% + (35vw));
+        top: calc(50svh + (35vw));
     }
 
     .blogs-container>span:nth-child(5) {
         left: calc(50% - (29.5vw));
-        top: calc(50% + (17.4vw));
+        top: calc(50svh + (17.4vw));
     }
 
     .blogs-container>span:nth-child(6) {
         left: calc(50% - (29.5vw));
-        top: calc(50% - (17.4vw));
+        top: calc(50svh - (17.4vw));
     }
 
     .blogs-container > span{
