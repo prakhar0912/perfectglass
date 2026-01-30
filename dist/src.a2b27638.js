@@ -188816,8 +188816,8 @@ var SplideRenderer = exports.SplideRenderer = /*#__PURE__*/function () {
   };
   return SplideRenderer;
 }();
-},{}],"assets/gradient3.jpg":[function(require,module,exports) {
-module.exports = "/gradient3.62704b62.jpg";
+},{}],"assets/gradient4.jpg":[function(require,module,exports) {
+module.exports = "/gradient4.f42f0afe.jpg";
 },{}],"public/transparent.hdr":[function(require,module,exports) {
 module.exports = "/transparent.25db1ebe.hdr";
 },{}],"public/finalbottle1.glb":[function(require,module,exports) {
@@ -188851,7 +188851,7 @@ var _RGBELoader = require("three/examples/jsm/loaders/RGBELoader");
 var _threeStdlib = require("three-stdlib");
 var _GPUComputationRenderer = require("three/examples/jsm/misc/GPUComputationRenderer");
 var _splide = _interopRequireDefault(require("@splidejs/splide"));
-var _gradient = _interopRequireDefault(require("../assets/gradient3.jpg"));
+var _gradient = _interopRequireDefault(require("../assets/gradient4.jpg"));
 var _transparent = _interopRequireDefault(require("../public/transparent.hdr"));
 var _finalbottle = _interopRequireDefault(require("../public/finalbottle1.glb"));
 var _bottle = _interopRequireDefault(require("../public/bottle.png"));
@@ -190174,7 +190174,7 @@ var main = /*#__PURE__*/function () {
   };
 }();
 main();
-},{"lenis":"node_modules/lenis/dist/lenis.mjs","gsap":"node_modules/gsap/index.js","gsap/CustomEase":"node_modules/gsap/CustomEase.js","gsap/SplitText":"node_modules/gsap/SplitText.js","gsap/ScrollTrigger":"node_modules/gsap/ScrollTrigger.js","three":"node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls":"node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/loaders/GLTFLoader":"node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/loaders/DRACOLoader":"node_modules/three/examples/jsm/loaders/DRACOLoader.js","lil-gui":"node_modules/lil-gui/dist/lil-gui.esm.js","@pmndrs/vanilla":"node_modules/@pmndrs/vanilla/index.js","three/examples/jsm/loaders/RGBELoader":"node_modules/three/examples/jsm/loaders/RGBELoader.js","three-stdlib":"node_modules/three-stdlib/index.js","three/examples/jsm/misc/GPUComputationRenderer":"node_modules/three/examples/jsm/misc/GPUComputationRenderer.js","@splidejs/splide":"node_modules/@splidejs/splide/dist/js/splide.esm.js","../assets/gradient3.jpg":"assets/gradient3.jpg","../public/transparent.hdr":"public/transparent.hdr","../public/finalbottle1.glb":"public/finalbottle1.glb","../public/bottle.png":"public/bottle.png","../assets/white_logo.png":"assets/white_logo.png","../assets/logo.png":"assets/logo.png","../assets/earth_map.jpg":"assets/earth_map.jpg","../assets/stars.jpg":"assets/stars.jpg"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"lenis":"node_modules/lenis/dist/lenis.mjs","gsap":"node_modules/gsap/index.js","gsap/CustomEase":"node_modules/gsap/CustomEase.js","gsap/SplitText":"node_modules/gsap/SplitText.js","gsap/ScrollTrigger":"node_modules/gsap/ScrollTrigger.js","three":"node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls":"node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/loaders/GLTFLoader":"node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/loaders/DRACOLoader":"node_modules/three/examples/jsm/loaders/DRACOLoader.js","lil-gui":"node_modules/lil-gui/dist/lil-gui.esm.js","@pmndrs/vanilla":"node_modules/@pmndrs/vanilla/index.js","three/examples/jsm/loaders/RGBELoader":"node_modules/three/examples/jsm/loaders/RGBELoader.js","three-stdlib":"node_modules/three-stdlib/index.js","three/examples/jsm/misc/GPUComputationRenderer":"node_modules/three/examples/jsm/misc/GPUComputationRenderer.js","@splidejs/splide":"node_modules/@splidejs/splide/dist/js/splide.esm.js","../assets/gradient4.jpg":"assets/gradient4.jpg","../public/transparent.hdr":"public/transparent.hdr","../public/finalbottle1.glb":"public/finalbottle1.glb","../public/bottle.png":"public/bottle.png","../assets/white_logo.png":"assets/white_logo.png","../assets/logo.png":"assets/logo.png","../assets/earth_map.jpg":"assets/earth_map.jpg","../assets/stars.jpg":"assets/stars.jpg"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;

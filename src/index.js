@@ -20,7 +20,7 @@ import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRe
 import Splide from "@splidejs/splide";
 
 
-import Mountains from "../assets/gradient3.jpg"
+import Mountains from "../assets/gradient4.jpg"
 import transparent from "../public/transparent.hdr"
 import glassBottle from "../public/finalbottle1.glb"
 import bottlePng from "../public/bottle.png"
