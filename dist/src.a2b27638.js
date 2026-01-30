@@ -189966,7 +189966,7 @@ var playAnimations = function playAnimations() {
       start: 'top center',
       endTrigger: '.section6',
       end: 'top+=200px center',
-      markers: true,
+      // markers: true,
       scrub: 1
     },
     x: global.animationPosition
