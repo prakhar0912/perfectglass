@@ -1,6 +1,6 @@
 import Lenis from "lenis";
 import { gsap } from "gsap";
-import Stats from "three/examples/jsm/libs/stats.module.js";
+// import Stats from "three/examples/jsm/libs/stats.module.js";
 import { CustomEase } from "gsap/CustomEase";
 import { SplitText } from "gsap/SplitText";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -31,10 +31,10 @@ import stars from '../assets/stars.jpg'
 
 const imageAspect = 1.7775510
 const modelAspect = 0.01
-const stats = new Stats();
+// const stats = new Stats();
 // 0: fps (frames per second), 1: ms (milliseconds per frame), 2: mb (memory)
-stats.showPanel(0);
-document.body.appendChild(stats.dom)
+// stats.showPanel(0);
+// document.body.appendChild(stats.dom)
 
 
 
@@ -1547,7 +1547,7 @@ function onWindowResize() {
 window.addEventListener('resize', onWindowResize, false);
 
 function render() {
-  stats.begin()
+  // stats.begin()
   requestAnimationFrame(render)
   // const delta = clock.getDelta()
 
@@ -1561,7 +1561,7 @@ function render() {
   app.updateScene()
 
   renderer.render(scene, camera);
-  stats.end()
+  // stats.end()
 }
 
 let addbottleGif = () => {

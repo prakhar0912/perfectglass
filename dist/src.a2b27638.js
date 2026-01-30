@@ -6635,126 +6635,7 @@ var _CSSPlugin = require("./CSSPlugin.js");
 var gsapWithCSS = exports.default = exports.gsap = _gsapCore.gsap.registerPlugin(_CSSPlugin.CSSPlugin) || _gsapCore.gsap,
   // to protect from tree shaking
   TweenMaxWithCSS = exports.TweenMax = gsapWithCSS.core.Tween;
-},{"./gsap-core.js":"node_modules/gsap/gsap-core.js","./CSSPlugin.js":"node_modules/gsap/CSSPlugin.js"}],"node_modules/three/examples/jsm/libs/stats.module.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-var _Stats = function Stats() {
-  var mode = 0;
-  var container = document.createElement('div');
-  container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
-  container.addEventListener('click', function (event) {
-    event.preventDefault();
-    showPanel(++mode % container.children.length);
-  }, false);
-
-  //
-
-  function addPanel(panel) {
-    container.appendChild(panel.dom);
-    return panel;
-  }
-  function showPanel(id) {
-    for (var i = 0; i < container.children.length; i++) {
-      container.children[i].style.display = i === id ? 'block' : 'none';
-    }
-    mode = id;
-  }
-
-  //
-
-  var beginTime = (performance || Date).now(),
-    prevTime = beginTime,
-    frames = 0;
-  var fpsPanel = addPanel(new _Stats.Panel('FPS', '#0ff', '#002'));
-  var msPanel = addPanel(new _Stats.Panel('MS', '#0f0', '#020'));
-  if (self.performance && self.performance.memory) {
-    var memPanel = addPanel(new _Stats.Panel('MB', '#f08', '#201'));
-  }
-  showPanel(0);
-  return {
-    REVISION: 16,
-    dom: container,
-    addPanel: addPanel,
-    showPanel: showPanel,
-    begin: function begin() {
-      beginTime = (performance || Date).now();
-    },
-    end: function end() {
-      frames++;
-      var time = (performance || Date).now();
-      msPanel.update(time - beginTime, 200);
-      if (time >= prevTime + 1000) {
-        fpsPanel.update(frames * 1000 / (time - prevTime), 100);
-        prevTime = time;
-        frames = 0;
-        if (memPanel) {
-          var memory = performance.memory;
-          memPanel.update(memory.usedJSHeapSize / 1048576, memory.jsHeapSizeLimit / 1048576);
-        }
-      }
-      return time;
-    },
-    update: function update() {
-      beginTime = this.end();
-    },
-    // Backwards Compatibility
-
-    domElement: container,
-    setMode: showPanel
-  };
-};
-_Stats.Panel = function (name, fg, bg) {
-  var min = Infinity,
-    max = 0,
-    round = Math.round;
-  var PR = round(window.devicePixelRatio || 1);
-  var WIDTH = 80 * PR,
-    HEIGHT = 48 * PR,
-    TEXT_X = 3 * PR,
-    TEXT_Y = 2 * PR,
-    GRAPH_X = 3 * PR,
-    GRAPH_Y = 15 * PR,
-    GRAPH_WIDTH = 74 * PR,
-    GRAPH_HEIGHT = 30 * PR;
-  var canvas = document.createElement('canvas');
-  canvas.width = WIDTH;
-  canvas.height = HEIGHT;
-  canvas.style.cssText = 'width:80px;height:48px';
-  var context = canvas.getContext('2d');
-  context.font = 'bold ' + 9 * PR + 'px Helvetica,Arial,sans-serif';
-  context.textBaseline = 'top';
-  context.fillStyle = bg;
-  context.fillRect(0, 0, WIDTH, HEIGHT);
-  context.fillStyle = fg;
-  context.fillText(name, TEXT_X, TEXT_Y);
-  context.fillRect(GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT);
-  context.fillStyle = bg;
-  context.globalAlpha = 0.9;
-  context.fillRect(GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT);
-  return {
-    dom: canvas,
-    update: function update(value, maxValue) {
-      min = Math.min(min, value);
-      max = Math.max(max, value);
-      context.fillStyle = bg;
-      context.globalAlpha = 1;
-      context.fillRect(0, 0, WIDTH, GRAPH_Y);
-      context.fillStyle = fg;
-      context.fillText(round(value) + ' ' + name + ' (' + round(min) + '-' + round(max) + ')', TEXT_X, TEXT_Y);
-      context.drawImage(canvas, GRAPH_X + PR, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT, GRAPH_X, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT);
-      context.fillRect(GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, GRAPH_HEIGHT);
-      context.fillStyle = bg;
-      context.globalAlpha = 0.9;
-      context.fillRect(GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, round((1 - value / maxValue) * GRAPH_HEIGHT));
-    }
-  };
-};
-var _default = exports.default = _Stats;
-},{}],"node_modules/gsap/utils/paths.js":[function(require,module,exports) {
+},{"./gsap-core.js":"node_modules/gsap/gsap-core.js","./CSSPlugin.js":"node_modules/gsap/CSSPlugin.js"}],"node_modules/gsap/utils/paths.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -188957,7 +188838,6 @@ var global = arguments[3];
 
 var _lenis = _interopRequireDefault(require("lenis"));
 var _gsap = require("gsap");
-var _statsModule = _interopRequireDefault(require("three/examples/jsm/libs/stats.module.js"));
 var _CustomEase = require("gsap/CustomEase");
 var _SplitText = require("gsap/SplitText");
 var _ScrollTrigger = require("gsap/ScrollTrigger");
@@ -188987,17 +188867,18 @@ function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length)
 function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
 function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; } // import Stats from "three/examples/jsm/libs/stats.module.js";
 // ScrollSmoother requires ScrollTrigger
 // import { ScrollSmoother } from "gsap/ScrollSmoother";
 // import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 _gsap.gsap.registerPlugin(_ScrollTrigger.ScrollTrigger, _CustomEase.CustomEase, _SplitText.SplitText);
 var imageAspect = 1.7775510;
 var modelAspect = 0.01;
-var stats = new _statsModule.default();
+// const stats = new Stats();
 // 0: fps (frames per second), 1: ms (milliseconds per frame), 2: mb (memory)
-stats.showPanel(0);
-document.body.appendChild(stats.dom);
+// stats.showPanel(0);
+// document.body.appendChild(stats.dom)
+
 var rgbeLoader = new _RGBELoader.RGBELoader();
 var gltfLoader = new _GLTFLoader.GLTFLoader();
 var draco = new _DRACOLoader.DRACOLoader();
@@ -190216,7 +190097,7 @@ function onWindowResize() {
 }
 window.addEventListener('resize', onWindowResize, false);
 function render() {
-  stats.begin();
+  // stats.begin()
   requestAnimationFrame(render);
   // const delta = clock.getDelta()
 
@@ -190229,7 +190110,7 @@ function render() {
   meshTransmissionMaterialUpdate(clock.elapsedTime);
   app.updateScene();
   renderer.render(scene, camera);
-  stats.end();
+  // stats.end()
 }
 var addbottleGif = function addbottleGif() {
   var loader = new THREE.TextureLoader();
@@ -190293,7 +190174,7 @@ var main = /*#__PURE__*/function () {
   };
 }();
 main();
-},{"lenis":"node_modules/lenis/dist/lenis.mjs","gsap":"node_modules/gsap/index.js","three/examples/jsm/libs/stats.module.js":"node_modules/three/examples/jsm/libs/stats.module.js","gsap/CustomEase":"node_modules/gsap/CustomEase.js","gsap/SplitText":"node_modules/gsap/SplitText.js","gsap/ScrollTrigger":"node_modules/gsap/ScrollTrigger.js","three":"node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls":"node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/loaders/GLTFLoader":"node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/loaders/DRACOLoader":"node_modules/three/examples/jsm/loaders/DRACOLoader.js","lil-gui":"node_modules/lil-gui/dist/lil-gui.esm.js","@pmndrs/vanilla":"node_modules/@pmndrs/vanilla/index.js","three/examples/jsm/loaders/RGBELoader":"node_modules/three/examples/jsm/loaders/RGBELoader.js","three-stdlib":"node_modules/three-stdlib/index.js","three/examples/jsm/misc/GPUComputationRenderer":"node_modules/three/examples/jsm/misc/GPUComputationRenderer.js","@splidejs/splide":"node_modules/@splidejs/splide/dist/js/splide.esm.js","../assets/gradient3.jpg":"assets/gradient3.jpg","../public/transparent.hdr":"public/transparent.hdr","../public/finalbottle1.glb":"public/finalbottle1.glb","../public/bottle.png":"public/bottle.png","../assets/white_logo.png":"assets/white_logo.png","../assets/logo.png":"assets/logo.png","../assets/earth_map.jpg":"assets/earth_map.jpg","../assets/stars.jpg":"assets/stars.jpg"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"lenis":"node_modules/lenis/dist/lenis.mjs","gsap":"node_modules/gsap/index.js","gsap/CustomEase":"node_modules/gsap/CustomEase.js","gsap/SplitText":"node_modules/gsap/SplitText.js","gsap/ScrollTrigger":"node_modules/gsap/ScrollTrigger.js","three":"node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls":"node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/loaders/GLTFLoader":"node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/loaders/DRACOLoader":"node_modules/three/examples/jsm/loaders/DRACOLoader.js","lil-gui":"node_modules/lil-gui/dist/lil-gui.esm.js","@pmndrs/vanilla":"node_modules/@pmndrs/vanilla/index.js","three/examples/jsm/loaders/RGBELoader":"node_modules/three/examples/jsm/loaders/RGBELoader.js","three-stdlib":"node_modules/three-stdlib/index.js","three/examples/jsm/misc/GPUComputationRenderer":"node_modules/three/examples/jsm/misc/GPUComputationRenderer.js","@splidejs/splide":"node_modules/@splidejs/splide/dist/js/splide.esm.js","../assets/gradient3.jpg":"assets/gradient3.jpg","../public/transparent.hdr":"public/transparent.hdr","../public/finalbottle1.glb":"public/finalbottle1.glb","../public/bottle.png":"public/bottle.png","../assets/white_logo.png":"assets/white_logo.png","../assets/logo.png":"assets/logo.png","../assets/earth_map.jpg":"assets/earth_map.jpg","../assets/stars.jpg":"assets/stars.jpg"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
