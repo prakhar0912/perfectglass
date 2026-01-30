@@ -20,14 +20,14 @@ import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRe
 import Splide from "@splidejs/splide";
 
 
-import Mountains from "../assets/mountains8.png"
+import Mountains from "../assets/gradient3.jpg"
 import transparent from "../public/transparent.hdr"
 import glassBottle from "../public/finalbottle1.glb"
 import bottlePng from "../public/bottle.png"
 import whiteLogo from '../assets/white_logo.png'
 import blackLogo from '../assets/logo.png'
 import earthMap from '../assets/earth_map.jpg'
-import glassHex from '../assets/glasshex.jpg'
+import stars from '../assets/stars.jpg'
 
 const imageAspect = 1.7775510
 const modelAspect = 0.01
@@ -76,7 +76,7 @@ const scene = new THREE.Scene();
 const clock = new THREE.Clock();
 
 
-const amlight = new THREE.AmbientLight(0xFFFFFF, 3)
+const amlight = new THREE.AmbientLight(0xFFFFFF, 2)
 amlight.position.set(0, -12, 0)
 scene.add(amlight)
 let addDirLights = (x, y, z, target, intensity) => {
@@ -139,6 +139,7 @@ global.rotateModel = true
 global.wireframe = false
 global.animationPosition = (window.innerWidth / 1900) * 20
 global.animationRotation = 6
+global.earthScale = 1
 global.modelScale = 1.4
 global.stopPositionAnimation = false
 global.aspectRatio = window.innerWidth / window.innerHeight
@@ -366,6 +367,8 @@ global.earthModel = new THREE.Group();
 
 async function setupEarth() {
 
+
+
   let earthMapTex = await loadTexture(earthMap)
   const material = new THREE.MeshStandardMaterial({
     map: earthMapTex,
@@ -550,7 +553,7 @@ void main()	{
     this.smoothShader = this.gpuCompute.createShaderMaterial(smoothSh, { smoothTexture: { value: null } })
   },
 
-  async initScene() {
+  async initScene(param) {
 
     const color = new THREE.Color(0x000000);
     const width = 1;
@@ -571,7 +574,7 @@ void main()	{
     // let Texture = colorTexture
     let Texture = await loadTexture(Mountains)
     global.normalTex = Texture
-    global.blackBg = await loadTexture(glassHex)
+    global.blackBg = await loadTexture(stars)
     global.blackBg.colorSpace = THREE.SRGBColorSpace
     // assigning image textures with SRGBColorSpace is essential in getting the rendered colors correct
     Texture.colorSpace = THREE.SRGBColorSpace
@@ -598,11 +601,11 @@ void main()	{
 
     const sun = new THREE.DirectionalLight(0xFFFFFF, 0.6)
     sun.position.set(300, 400, 175)
-    scene.add(sun)
+    // scene.add(sun)
 
     const sun2 = new THREE.DirectionalLight(0xFFFFFF, 0.6)
     sun2.position.set(- 100, 350, - 200)
-    scene.add(sun2)
+    // scene.add(sun2)
 
     const materialColor = 0xFFFFFF
 
@@ -798,12 +801,19 @@ void main() {
     this.material.shininess = 100
     this.material.map = Texture
 
+    if (param == 2) {
+      this.material.map = global.blackBg
+    }
+
     // Sets the uniforms with the material values
     this.material.uniforms['diffuse'].value = this.material.color
     this.material.uniforms['specular'].value = this.material.specular
     this.material.uniforms['shininess'].value = Math.max(this.material.shininess, 1e-4)
     this.material.uniforms['opacity'].value = this.material.opacity
     this.material.uniforms['map'].value = Texture
+    if (param == 2) {
+      this.material.uniforms['map'].value = global.blackBg
+    }
 
 
 
@@ -816,6 +826,7 @@ void main() {
     this.waterUniforms = this.material.uniforms
 
     this.waterMesh = new THREE.Mesh(geometry, this.material)
+
     let aspectRatio = window.innerWidth / window.innerHeight
     if (imageAspect > aspectRatio) {
       scale = [imageAspect / aspectRatio, 1]
@@ -826,14 +837,22 @@ void main() {
     this.waterMesh.scale.set(scale[0], scale[1], 1)
     this.waterMesh.matrixAutoUpdate = false
     this.waterMesh.position.set(0, 0, -5)
+    if (param == 2) {
+      this.waterMesh.matrixAutoUpdate = true
+
+      this.waterMesh.position.set(0, -40, -4)
+
+    }
 
     this.waterMesh.updateMatrix()
 
     scene.add(this.waterMesh)
+
     // addDirLights(0,0,-1, this.waterMesh, 2)
 
     // Creates the gpu computation class and sets it up
     this.initgpu()
+    return this.waterMesh
 
   },
   resize(scale) {
@@ -925,7 +944,7 @@ void main() {
         z: -this.mouseCoords.x * (Math.PI / global.animationRotation),
         y: this.mouseCoords.x * (Math.PI / global.animationRotation),
         x: this.mouseCoords.y * (Math.PI / (global.animationRotation + 2)),
-        duration: global.isMobile ? 1 : 0,
+        duration: global.isMobile ? 0.2 : 0,
         ease: "none"
       })
     }
@@ -965,6 +984,8 @@ void main() {
   }
 }
 
+
+
 if (window.innerWidth < 1090) {
   global.animationPosition = (window.innerWidth / 1900) * 18
 }
@@ -972,20 +993,33 @@ if (window.innerWidth < 1090) {
 if (window.innerWidth < 850) {
   global.modelScale = 1.3
   global.animationRotation = 8
+  global.earthScale = window.innerWidth/1115
 }
 
 if (window.innerWidth < 730) {
   global.animationRotation = 10
 }
 
+if (window.innerWidth < 435) {
+  global.earthScale = window.innerWidth/1325
+}
+
+if (window.innerWidth < 570) {
+  global.earthScale = 0.4
+}
+
+
 if (window.innerWidth < 620) {
   global.stopPositionAnimation = true
+  global.animationPosition = 0
 }
 
 let sec2anim;
 let sec3anim;
 let sec4anim;
+let sec6anim;
 let mobileanim;
+let sec3BottomAnimMobile;
 
 let playAnimations = () => {
 
@@ -1084,21 +1118,9 @@ let playAnimations = () => {
         duration: 0.1,
         ease: "power2.out"
       })
-
-      // app.material.uniforms['map'].value = global.blackBg
-      // app.waterMesh.needsUpdate = true
-      // app.waterMesh.updateMatrix()
-      // app.material.map = global.blackBg
-      // gsap.to(amlight, {
-      //   intensity: 0.5,
-      //   duration: 1,
-      //   ease: "power2.out"
-      // })
     },
     onLeaveBack: () => {
       global.rotateModel = true
-      // app.material.uniforms['map'].value = global.normalTex
-      // app.material.map = global.normalTex
     },
   });
   sec3anim = ScrollTrigger.create({
@@ -1136,159 +1158,123 @@ let playAnimations = () => {
       yoyo.play()
     },
   });
+
+  sec3BottomAnimMobile = ScrollTrigger.create({
+    scroller: outerContainer,
+    trigger: '.section3',
+    start: 'center center',
+    endTrigger: '.section3',
+    end: 'bottom center',
+    // markers: true,
+    onEnter: () => {
+      yoyo.pause()
+    },
+    onUpdate: (self) => {
+      yoyo.pause()
+      global.pivotModel.scale.set((1 - self.progress.toFixed(4)), (1 - self.progress.toFixed(4)), (1 - self.progress.toFixed(4)))
+    },
+    onLeaveBack: () => {
+      yoyo.play()
+    },
+  });
+  sec3BottomAnimMobile.disable()
+
+
+  let earthEnter = gsap.timeline({ paused: true })
+  earthEnter.to(amlight, {
+    intensity: 0.5,
+    duration: 1,
+    ease: "power2.in",
+  }, "<").to(global.earthModel.scale, {
+    x: global.earthScale,
+    y: global.earthScale,
+    z: global.earthScale,
+    invalidateOnRefresh: true,
+    duration: 1,
+    ease: "power2.in"
+  }, "<").to(".blogs-container", {
+    opacity: 1,
+    duration: 0.7
+  })
+
+  let earthLeave = gsap.timeline({ paused: true })
+  earthLeave.to(".blogs-container", {
+    opacity: 0,
+    duration: 0.7
+  }).to(amlight, {
+    intensity: 2,
+    duration: 1,
+    ease: "power2.out"
+  }, "<").to(global.earthModel.scale, {
+    x: 0,
+    y: 0,
+    z: 0,
+    duration: 1,
+    ease: "power2.out"
+  }, "<")
+
+
   sec4anim = ScrollTrigger.create({
     scroller: outerContainer,
     trigger: '.section4',
-    start: 'top center',
+    start: 'top+=150px center',
     endTrigger: '.section4',
-    end: '200px center',
-    markers: true,
+    end: 'bottom-=300px center',
+    // markers: true,
     onEnter: () => {
-      // gsap.to(amlight, {
-      //   intensity: 0.01,
-      //   duration: 2,
-      //   ease: "power2.out"
-      // })
-      // gsap.to(global.earthModel.scale, {
-      //   x: 1,
-      //   y: 1,
-      //   z: 1,
-      //   duration: 2,
-      //   ease: "power2.in"
-      // })
+      if (earthLeave.isActive) {
+        earthLeave.pause()
+      }
+      earthEnter.play(0)
+    },
+    onEnterBack: () => {
+      console.log('here')
+      if (earthLeave.isActive) {
+        earthLeave.pause()
+      }
+      earthEnter.play(0)
     },
     onLeave: () => {
-      // global.rotateModel = true
-      console.log('done')
-      gsap.to(amlight, {
-        intensity: 0,
-        duration: 1.4,
-        ease: "power2.out"
-      })
-      gsap.to(global.earthModel.scale, {
-        x: 1,
-        y: 1,
-        z: 1,
-        duration: 1.4,
-        ease: "power2.in"
-      })
+      if (earthEnter.isActive) {
+        earthEnter.pause()
+      }
+      earthLeave.play(0)
     },
     onLeaveBack: () => {
-      console.log('in')
-      gsap.to(amlight, {
-        intensity: 3,
-        duration: 1.4,
-        ease: "power2.out"
-      })
-      gsap.to(global.earthModel.scale, {
-        x: 0,
-        y: 0,
-        z: 0,
-        duration: 0.7,
-        ease: "power2.out"
-      })
+      if (earthEnter.isActive) {
+        earthEnter.pause()
+      }
+      earthLeave.play(0)
     }
   });
 
+  gsap.to(global.pivotModel.scale, {
+    scrollTrigger: {
+      scroller: outerContainer,
+      trigger: '.section6',
+      start: 'top center',
+      endTrigger: '.section6',
+      end: 'top+=200px center',
+      markers: true,
+      scrub: 1
+    },
+    x: 1,
+    y: 1,
+    z: 1
+  })
+  gsap.to(global.pivotModel.position, {
+    scrollTrigger: {
+      scroller: outerContainer,
+      trigger: '.section6',
+      start: 'top center',
+      endTrigger: '.section6',
+      end: 'top+=200px center',
+      markers: true,
+      scrub: 1
+    },
+    x: global.animationPosition,
+  })
 
-  // gsap.to(".card1container", {
-  //   scrollTrigger: {
-  //     scroller: outerContainer,
-  //     trigger: ".card1container",
-  //     scrub: 1,
-  //     // markers: true,
-  //     start: "-100px center",
-  //   },
-  //   keyframes: [
-  //     { yPercent: 0, opacity: 1 },
-  //     { yPercent: 0, opacity: 1 },
-  //     { yPercent: 0, opacity: 0 }
-  //   ]
-  // })
-
-  // gsap.to(".card2container", {
-  //   scrollTrigger: {
-  //     scroller: outerContainer,
-  //     trigger: ".card2container",
-  //     scrub: 1,
-  //     // markers: true,
-  //     start: "-100px center",
-  //   },
-  //   keyframes: [
-  //     { yPercent: 0, opacity: 1 },
-  //     { yPercent: 0, opacity: 1 },
-  //     { yPercent: 0, opacity: 0 }
-  //   ]
-  // })
-
-  // gsap.to(".card3container", {
-  //   scrollTrigger: {
-  //     scroller: outerContainer,
-  //     trigger: ".card3container",
-  //     scrub: 1,
-  //     // markers: true,
-  //     start: "-100px center",
-  //   },
-  //   keyframes: [
-  //     { yPercent: 0, opacity: 1 },
-  //     { yPercent: 0, opacity: 1 },
-  //     { yPercent: 0, opacity: 0 }
-  //   ]
-  // })
-
-
-  // card2anim = gsap.to(".card2",
-  //   {
-  //     scrollTrigger: {
-  //       scroller: outerContainer,
-  //       trigger: ".card2container",
-  //       scrub: 1,
-  //       invalidateOnRefresh: true,
-  //       // markers: true,
-  //       start: "-300px center",
-  //       end: "bottom center",
-  //     },
-  //     keyframes: [
-  //       { scale: 1.1 },
-  //       { scale: 1 }
-  //     ],
-  //     rotateY: "90deg",
-  //     y: -300,
-  //     x: window.innerWidth / 1.5,
-  //     ease: "none"
-
-  //   }
-  // )
-
-  // card3anim = gsap.to(".card3",
-  //   {
-  //     scrollTrigger: {
-  //       scroller: outerContainer,
-  //       trigger: ".card3container",
-  //       scrub: 1,
-  //       invalidateOnRefresh: true,
-  //       // markers: true,
-  //       start: "-300px center",
-  //       end: "bottom center",
-  //       onLeave: () => {
-  //         console.log('comp')
-  //         global.pivotModel.visible = false
-  //       },
-  //       onEnterBack: () => {
-  //         console.log('reenter')
-  //         global.pivotModel.visible = true
-  //       }
-  //     },
-  //     keyframes: [
-  //       { scale: 1.1 },
-  //       { scale: 1 }
-  //     ],
-  //     rotateY: "90deg",
-  //     y: -300,
-  //     x: window.innerWidth / 1.5,
-  //     ease: "none",
-  //   }
-  // )
   new Splide('.splide', {
     type: 'loop',
     perPage: 3,
@@ -1320,7 +1306,8 @@ let playAnimations = () => {
   if (global.stopPositionAnimation) {
     sec2anim.disable()
     sec3anim.disable()
-    sec4anim.disable()
+    sec3BottomAnim.disable()
+    sec3BottomAnimMobile.enable()
     mobileanim.enable()
   }
 
@@ -1470,11 +1457,14 @@ let resizeVariables = () => {
   if (window.innerWidth < 850) {
     global.modelScale = 1.3
     global.animationRotation = 8
+    global.earthScale = window.innerWidth/850
+    console.log(global.earthScale)
   }
 
   if (window.innerWidth < 730) {
     global.animationRotation = 10
   }
+
 
   if (window.innerWidth < 620) {
     global.stopPositionAnimation = true
@@ -1483,16 +1473,20 @@ let resizeVariables = () => {
     global.stopPositionAnimation = false
   }
 
+
+
   if (global.stopPositionAnimation) {
+    console.log('here')
     sec2anim.disable()
     sec3anim.disable()
-    sec4anim.disable()
+    sec3BottomAnim.disable()
+    sec3BottomAnimMobile.enable()
     mobileanim.enable()
   }
   else {
     sec2anim.enable()
     sec3anim.enable()
-    sec4anim.enable()
+    // sec4anim.enable()
     mobileanim.disable()
   }
 
@@ -1591,7 +1585,7 @@ let main = async () => {
 
   await setupEnv();
   await setupMeshTransmissionMaterial();
-  await app.initScene()
+  await app.initScene(1)
   await setupEarth()
   render()
   playAnimations()
