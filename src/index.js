@@ -20,10 +20,10 @@ import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRe
 import Splide from "@splidejs/splide";
 
 
-import Mountains from "../assets/gradient4.jpg"
+import Mountains from "../assets/mountains8.png"
 import transparent from "../public/transparent.hdr"
 import glassBottle from "../public/finalbottle1.glb"
-import bottlePng from "../public/bottle.png"
+import bottlePng from "../assets/glassbottle.png"
 import whiteLogo from '../assets/white_logo.png'
 import blackLogo from '../assets/logo.png'
 import earthMap from '../assets/earth_map.jpg'
@@ -31,10 +31,7 @@ import stars from '../assets/stars.jpg'
 
 const imageAspect = 1.7775510
 const modelAspect = 0.01
-// const stats = new Stats();
-// 0: fps (frames per second), 1: ms (milliseconds per frame), 2: mb (memory)
-// stats.showPanel(0);
-// document.body.appendChild(stats.dom)
+
 
 
 
@@ -1110,6 +1107,7 @@ let playAnimations = () => {
     onUpdate: (self) => {
       global.pivotModel.position.set(self.progress.toFixed(4) * -global.animationPosition, self.progress.toFixed(4) * 2, 0)
       global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI)
+      amlight.intensity = (2-(self.progress.toFixed(4)/2)) 
     },
     onEnter: () => {
 
@@ -1585,7 +1583,7 @@ let addbottleGif = () => {
 
       // Create the mesh and add to scene
       const plane = new THREE.Mesh(geometry, material);
-      plane.scale.set(6, 6, 6)
+      plane.scale.set(4,4,4)
       plane.position.set(0, -3, 0)
       scene.add(plane)
     },

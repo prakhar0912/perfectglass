@@ -188816,14 +188816,14 @@ var SplideRenderer = exports.SplideRenderer = /*#__PURE__*/function () {
   };
   return SplideRenderer;
 }();
-},{}],"assets/gradient4.jpg":[function(require,module,exports) {
-module.exports = "/gradient4.f42f0afe.jpg";
+},{}],"assets/mountains8.png":[function(require,module,exports) {
+module.exports = "/mountains8.f832fcb5.png";
 },{}],"public/transparent.hdr":[function(require,module,exports) {
 module.exports = "/transparent.25db1ebe.hdr";
 },{}],"public/finalbottle1.glb":[function(require,module,exports) {
 module.exports = "/finalbottle1.74e2268c.glb";
-},{}],"public/bottle.png":[function(require,module,exports) {
-module.exports = "/bottle.1ba29222.png";
+},{}],"assets/glassbottle.png":[function(require,module,exports) {
+module.exports = "/glassbottle.be63c0f7.png";
 },{}],"assets/white_logo.png":[function(require,module,exports) {
 module.exports = "/white_logo.449e5188.png";
 },{}],"assets/logo.png":[function(require,module,exports) {
@@ -188851,10 +188851,10 @@ var _RGBELoader = require("three/examples/jsm/loaders/RGBELoader");
 var _threeStdlib = require("three-stdlib");
 var _GPUComputationRenderer = require("three/examples/jsm/misc/GPUComputationRenderer");
 var _splide = _interopRequireDefault(require("@splidejs/splide"));
-var _gradient = _interopRequireDefault(require("../assets/gradient4.jpg"));
+var _mountains = _interopRequireDefault(require("../assets/mountains8.png"));
 var _transparent = _interopRequireDefault(require("../public/transparent.hdr"));
 var _finalbottle = _interopRequireDefault(require("../public/finalbottle1.glb"));
-var _bottle = _interopRequireDefault(require("../public/bottle.png"));
+var _glassbottle = _interopRequireDefault(require("../assets/glassbottle.png"));
 var _white_logo = _interopRequireDefault(require("../assets/white_logo.png"));
 var _logo = _interopRequireDefault(require("../assets/logo.png"));
 var _earth_map = _interopRequireDefault(require("../assets/earth_map.jpg"));
@@ -188874,11 +188874,6 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 _gsap.gsap.registerPlugin(_ScrollTrigger.ScrollTrigger, _CustomEase.CustomEase, _SplitText.SplitText);
 var imageAspect = 1.7775510;
 var modelAspect = 0.01;
-// const stats = new Stats();
-// 0: fps (frames per second), 1: ms (milliseconds per frame), 2: mb (memory)
-// stats.showPanel(0);
-// document.body.appendChild(stats.dom)
-
 var rgbeLoader = new _RGBELoader.RGBELoader();
 var gltfLoader = new _GLTFLoader.GLTFLoader();
 var draco = new _DRACOLoader.DRACOLoader();
@@ -189034,7 +189029,7 @@ function _setupMeshTransmissionMaterial() {
             break;
           }
           _context6.n = 1;
-          return loadTexture(_bottle.default);
+          return loadTexture(_glassbottle.default);
         case 1:
           bottleTex = _context6.v;
           bottleTex.colorSpace = THREE.SRGBColorSpace;
@@ -189369,7 +189364,7 @@ var app = {
 
             // let Texture = colorTexture
             _context3.n = 1;
-            return loadTexture(_gradient.default);
+            return loadTexture(_mountains.default);
           case 1:
             Texture = _context3.v;
             global.normalTex = Texture;
@@ -189691,6 +189686,7 @@ var playAnimations = function playAnimations() {
     onUpdate: function onUpdate(self) {
       global.pivotModel.position.set(self.progress.toFixed(4) * -global.animationPosition, self.progress.toFixed(4) * 2, 0);
       global.pivotModel.rotation.y = self.progress.toFixed(4) * (2 * Math.PI);
+      amlight.intensity = 2 - self.progress.toFixed(4) / 2;
     },
     onEnter: function onEnter() {
       _gsap.gsap.to(global.pivotModel.rotation, {
@@ -190116,7 +190112,7 @@ var addbottleGif = function addbottleGif() {
   var loader = new THREE.TextureLoader();
 
   // Use a public PNG URL or replace with your local asset path
-  loader.load(_bottle.default, function (texture) {
+  loader.load(_glassbottle.default, function (texture) {
     // Adjust color space for better appearance in modern Three.js
     texture.colorSpace = THREE.SRGBColorSpace;
 
@@ -190133,7 +190129,7 @@ var addbottleGif = function addbottleGif() {
 
     // Create the mesh and add to scene
     var plane = new THREE.Mesh(geometry, material);
-    plane.scale.set(6, 6, 6);
+    plane.scale.set(4, 4, 4);
     plane.position.set(0, -3, 0);
     scene.add(plane);
   }, undefined,
@@ -190174,7 +190170,7 @@ var main = /*#__PURE__*/function () {
   };
 }();
 main();
-},{"lenis":"node_modules/lenis/dist/lenis.mjs","gsap":"node_modules/gsap/index.js","gsap/CustomEase":"node_modules/gsap/CustomEase.js","gsap/SplitText":"node_modules/gsap/SplitText.js","gsap/ScrollTrigger":"node_modules/gsap/ScrollTrigger.js","three":"node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls":"node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/loaders/GLTFLoader":"node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/loaders/DRACOLoader":"node_modules/three/examples/jsm/loaders/DRACOLoader.js","lil-gui":"node_modules/lil-gui/dist/lil-gui.esm.js","@pmndrs/vanilla":"node_modules/@pmndrs/vanilla/index.js","three/examples/jsm/loaders/RGBELoader":"node_modules/three/examples/jsm/loaders/RGBELoader.js","three-stdlib":"node_modules/three-stdlib/index.js","three/examples/jsm/misc/GPUComputationRenderer":"node_modules/three/examples/jsm/misc/GPUComputationRenderer.js","@splidejs/splide":"node_modules/@splidejs/splide/dist/js/splide.esm.js","../assets/gradient4.jpg":"assets/gradient4.jpg","../public/transparent.hdr":"public/transparent.hdr","../public/finalbottle1.glb":"public/finalbottle1.glb","../public/bottle.png":"public/bottle.png","../assets/white_logo.png":"assets/white_logo.png","../assets/logo.png":"assets/logo.png","../assets/earth_map.jpg":"assets/earth_map.jpg","../assets/stars.jpg":"assets/stars.jpg"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"lenis":"node_modules/lenis/dist/lenis.mjs","gsap":"node_modules/gsap/index.js","gsap/CustomEase":"node_modules/gsap/CustomEase.js","gsap/SplitText":"node_modules/gsap/SplitText.js","gsap/ScrollTrigger":"node_modules/gsap/ScrollTrigger.js","three":"node_modules/three/build/three.module.js","three/examples/jsm/controls/OrbitControls":"node_modules/three/examples/jsm/controls/OrbitControls.js","three/examples/jsm/loaders/GLTFLoader":"node_modules/three/examples/jsm/loaders/GLTFLoader.js","three/examples/jsm/loaders/DRACOLoader":"node_modules/three/examples/jsm/loaders/DRACOLoader.js","lil-gui":"node_modules/lil-gui/dist/lil-gui.esm.js","@pmndrs/vanilla":"node_modules/@pmndrs/vanilla/index.js","three/examples/jsm/loaders/RGBELoader":"node_modules/three/examples/jsm/loaders/RGBELoader.js","three-stdlib":"node_modules/three-stdlib/index.js","three/examples/jsm/misc/GPUComputationRenderer":"node_modules/three/examples/jsm/misc/GPUComputationRenderer.js","@splidejs/splide":"node_modules/@splidejs/splide/dist/js/splide.esm.js","../assets/mountains8.png":"assets/mountains8.png","../public/transparent.hdr":"public/transparent.hdr","../public/finalbottle1.glb":"public/finalbottle1.glb","../assets/glassbottle.png":"assets/glassbottle.png","../assets/white_logo.png":"assets/white_logo.png","../assets/logo.png":"assets/logo.png","../assets/earth_map.jpg":"assets/earth_map.jpg","../assets/stars.jpg":"assets/stars.jpg"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -190199,7 +190195,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53129" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50507" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
